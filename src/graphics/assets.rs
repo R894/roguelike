@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-pub const TILE_SIZE: f32 = 32.;
-
 #[derive(Resource)]
 pub struct Ascii {
     pub texture: Handle<TextureAtlasLayout>,

@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
-use crate::{
-    board::components::{Position, Tile},
-    globals::TILE_SIZE,
-};
+use crate::board::components::{Position, Tile};
 
-use super::assets::{Ascii, AsciiText};
+use super::{
+    assets::{Ascii, AsciiText},
+    TILE_SIZE, TILE_Z,
+};
 
 const ATLAS_PATH: &str = "textures/Ascii.png";
 
@@ -90,18 +90,20 @@ pub fn spawn_tile_renderer(
     assets: Res<Ascii>,
 ) {
     for (entity, position) in query.iter() {
-        let mut sprite = Sprite { ..default() };
-        sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
-        sprite.color = Color::OLIVE;
-        let v = Vec3::new(
-            TILE_SIZE * position.v.x as f32,
-            TILE_SIZE * position.v.y as f32,
-            0.,
-        );
+        let sprite = Sprite {
+            custom_size: Some(Vec2::splat(TILE_SIZE)),
+            ..default()
+        };
+
+        let v = super::get_world_position(position, TILE_Z);
         commands.entity(entity).insert(SpriteSheetBundle {
             sprite,
             texture: assets.image.clone(),
-            transform: Transform::from_translation(v),
+            transform: Transform::from_translation(Vec3::new(
+                v.x + TILE_SIZE / 8.,
+                v.y + TILE_SIZE / 4.,
+                v.z,
+            )),
             atlas: TextureAtlas {
                 index: '.' as usize,
                 layout: assets.texture.clone(),
