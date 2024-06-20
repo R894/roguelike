@@ -1,21 +1,20 @@
 mod camera;
 
+mod actions;
 mod board;
 mod globals;
 mod graphics;
+mod input;
+mod manager;
+mod pieces;
 mod player;
 mod states;
 mod ui;
 mod vectors;
 
 use bevy::prelude::*;
-use board::BoardPlugin;
 use camera::CameraPlugin;
-
-use graphics::GraphicsPlugin;
-use player::PlayerPlugin;
-use states::MainState;
-use ui::UiPlugin;
+use states::{GameState, MainState};
 
 fn main() {
     App::new()
@@ -31,11 +30,16 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
         )
         .init_state::<MainState>()
+        .init_state::<GameState>()
         .insert_resource(Msaa::Off)
         .add_plugins(CameraPlugin)
-        .add_plugins(GraphicsPlugin)
-        .add_plugins(UiPlugin)
-        .add_plugins(BoardPlugin)
-        .add_plugins(PlayerPlugin)
+        .add_plugins(actions::ActionsPlugin)
+        .add_plugins(ui::UiPlugin)
+        .add_plugins(board::BoardPlugin)
+        .add_plugins(graphics::GraphicsPlugin)
+        .add_plugins(input::InputPlugin)
+        .add_plugins(manager::ManagerPlugin)
+        .add_plugins(player::PlayerPlugin)
+        .add_plugins(pieces::PiecesPlugin)
         .run();
 }
