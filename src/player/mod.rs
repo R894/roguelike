@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     board::components::Position,
-    pieces::components::{Actor, Piece},
+    pieces::components::{Actor, Health, Melee, Occupier, Piece},
     vectors::Vector2Int,
 };
 
@@ -21,6 +21,9 @@ fn spawn_player(mut commands: Commands) {
     commands.spawn((
         Actor::default(),
         Player,
+        Occupier,
+        Health { value: 10 },
+        Melee { damage: 5 },
         Piece {
             kind: "Player".to_string(),
         },
