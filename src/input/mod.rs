@@ -2,10 +2,10 @@ use std::collections::VecDeque;
 
 use bevy::prelude::*;
 
-use crate::actions::models::WalkAction;
+use crate::actions::models::{MeleeHitAction, WalkAction};
 use crate::actions::ActorQueue;
 use crate::board::components::Position;
-use crate::pieces::components::Actor;
+use crate::pieces::components::{Actor, Melee};
 use crate::player::Player;
 use crate::states::GameState;
 use crate::vectors::Vector2Int;
@@ -33,11 +33,11 @@ pub struct PlayerInputReadyEvent;
 
 fn player_position(
     keys: ResMut<ButtonInput<KeyCode>>,
-    mut player_query: Query<(Entity, &Position, &mut Actor), With<Player>>,
+    mut player_query: Query<(Entity, &Position, &Melee, &mut Actor), With<Player>>,
     mut queue: ResMut<ActorQueue>,
     mut ev_input: EventWriter<PlayerInputReadyEvent>,
 ) {
-    let Ok((entity, position, mut actor)) = player_query.get_single_mut() else {
+    let Ok((entity, position, melee, mut actor)) = player_query.get_single_mut() else {
         return;
     };
     for (key, dir) in DIR_KEY_MAPPING {
@@ -45,7 +45,12 @@ fn player_position(
             continue;
         }
         let action = WalkAction(entity, position.v + dir);
-        actor.0 = Some(Box::new(action));
+        let attack_action = MeleeHitAction {
+            attacker: entity,
+            target: position.v + dir,
+            damage: melee.damage,
+        };
+        actor.0 = vec![(Box::new(action), 0), (Box::new(attack_action), 0)];
         queue.0 = VecDeque::from([entity]);
         ev_input.send(PlayerInputReadyEvent);
     }
