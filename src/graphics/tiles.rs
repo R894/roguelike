@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
-use crate::board::components::{Position, Tile};
-
-use super::{
-    assets::{Ascii, AsciiText},
-    TILE_SIZE, TILE_Z,
+use crate::{
+    board::components::{Position, Tile},
+    pieces::components::Occupier,
 };
+
+use super::{assets::Ascii, TILE_SIZE, TILE_Z};
 
 const ATLAS_PATH: &str = "textures/Ascii.png";
 
@@ -24,40 +24,6 @@ pub fn setup(
         texture: texture_atlas_layout,
         image: texture,
     });
-}
-
-pub fn spawn_ascii_text(
-    commands: &mut Commands,
-    ascii: &Res<Ascii>,
-    to_print: &str,
-    left_center: Vec3,
-) -> Entity {
-    let mut character_sprites = Vec::new();
-    for (i, char) in to_print.chars().enumerate() {
-        assert!(char as usize <= 255);
-        character_sprites.push(spawn_sprite(
-            commands,
-            (i as f32 * TILE_SIZE, 0.0, 0.0),
-            char as usize,
-            Sprite {
-                color: Color::rgb(0.8, 0.8, 0.8),
-                custom_size: Some(Vec2::splat(TILE_SIZE)),
-                ..default()
-            },
-            ascii,
-        ))
-    }
-
-    commands
-        .spawn(Name::new(format!("Text - {}", to_print)))
-        .insert(AsciiText)
-        .insert(Transform {
-            translation: left_center,
-            ..default()
-        })
-        .insert(GlobalTransform::default())
-        .push_children(&character_sprites)
-        .id()
 }
 
 pub fn spawn_sprite(
@@ -86,11 +52,13 @@ pub fn spawn_sprite(
 
 pub fn spawn_tile_renderer(
     mut commands: Commands,
-    query: Query<(Entity, &Position), Added<Tile>>,
+    tile_query: Query<(Entity, &Position), (Added<Tile>, Without<Occupier>)>,
+    wall_query: Query<(Entity, &Position), (Added<Occupier>, With<Tile>)>,
     assets: Res<Ascii>,
 ) {
-    for (entity, position) in query.iter() {
+    for (entity, position) in tile_query.iter() {
         let sprite = Sprite {
+            color: Color::rgba(1., 1., 1., 0.5),
             custom_size: Some(Vec2::splat(TILE_SIZE)),
             ..default()
         };
@@ -106,6 +74,25 @@ pub fn spawn_tile_renderer(
             )),
             atlas: TextureAtlas {
                 index: '.' as usize,
+                layout: assets.texture.clone(),
+            },
+            ..Default::default()
+        });
+    }
+
+    for (entity, position) in wall_query.iter() {
+        let sprite = Sprite {
+            custom_size: Some(Vec2::splat(TILE_SIZE)),
+            ..default()
+        };
+
+        let v = super::get_world_position(position, TILE_Z);
+        commands.entity(entity).insert(SpriteSheetBundle {
+            sprite,
+            texture: assets.image.clone(),
+            transform: Transform::from_translation(v),
+            atlas: TextureAtlas {
+                index: '#' as usize,
                 layout: assets.texture.clone(),
             },
             ..Default::default()
