@@ -16,20 +16,33 @@ pub fn spawn_piece_renderer(
         };
         let sprite = Sprite {
             custom_size: Some(Vec2::splat(TILE_SIZE)),
-            color: Color::RED,
+            color: Color::WHITE,
             ..default()
         };
         let v = super::get_world_position(position, PIECE_Z);
-        commands.entity(entity).insert(SpriteSheetBundle {
-            sprite,
-            texture: assets.image.clone(),
-            transform: Transform::from_translation(v),
-            atlas: TextureAtlas {
-                index: sprite_idx,
-                layout: assets.texture.clone(),
-            },
-            ..Default::default()
-        });
+        commands
+            .entity(entity)
+            .insert(SpriteSheetBundle {
+                sprite,
+                texture: assets.image.clone(),
+                transform: Transform::from_translation(v),
+                atlas: TextureAtlas {
+                    index: sprite_idx,
+                    layout: assets.texture.clone(),
+                },
+                ..default()
+            })
+            .with_children(|parent| {
+                parent.spawn(SpriteSheetBundle {
+                    sprite: Sprite {
+                        color: Color::rgb(0.2, 0.2, 0.2),
+                        custom_size: Some(Vec2::splat(TILE_SIZE)),
+                        ..default()
+                    },
+                    transform: Transform::from_xyz(0., 0., -1.),
+                    ..default()
+                });
+            });
     }
 }
 
