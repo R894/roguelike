@@ -18,7 +18,6 @@ pub fn process_action_queue(world: &mut World) {
     if process_pending_actions(world) {
         return;
     }
-    println!("Processing actions");
     let Some(mut queue) = world.get_resource_mut::<ActorQueue>() else {
         return;
     };
@@ -87,7 +86,9 @@ pub fn plan_walk(
     occupier_query: Query<&Position, With<Occupier>>,
     board: Res<CurrentBoard>,
 ) {
-    let Some(entity) = queue.0.get(0) else { return };
+    let Some(entity) = queue.0.front() else {
+        return;
+    };
     let Ok((position, mut actor)) = query.get_mut(*entity) else {
         return;
     };
