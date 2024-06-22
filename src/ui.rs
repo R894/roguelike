@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::graphics::assets::Ascii;
+
 pub const NORMAL_BUTTON: Color = Color::rgb(0.8, 0.8, 0.8);
 pub const HOVERED_BUTTON: Color = Color::rgb(0.9, 0.9, 0.9);
 pub const PRESSED_BUTTON: Color = Color::rgb(0.6, 0.6, 0.6);
@@ -9,14 +11,51 @@ pub struct TextBox;
 
 pub struct UiPlugin;
 
+#[derive(Resource)]
+pub struct UiFont(Handle<Font>);
+
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, button_system);
+        app.add_systems(Startup, setup)
+            .add_systems(Update, button_system)
+            .add_systems(Update, test_ui);
     }
 }
 
-pub fn test_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let textbox = spawn_textbox(&mut commands, &asset_server, "Hey there :)", (300., 300.));
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font: Handle<Font> = asset_server.load("fonts/FiraSans-Bold.ttf");
+    commands.insert_resource(UiFont(font));
+}
+
+pub fn test_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    ascii: Res<Ascii>,
+    font: Res<UiFont>,
+) {
+    let text = commands
+        .spawn(TextBundle::from_section(
+            "Health: 10",
+            TextStyle {
+                font: font.0.clone(),
+                font_size: 40.0,
+                color: Color::rgb(0.7, 0.7, 0.7),
+            },
+        ))
+        .id();
+
+    let node_bundle = NodeBundle {
+        style: Style {
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
+            align_items: AlignItems::FlexEnd,
+            padding: UiRect::all(Val::Px(14.)),
+            ..default()
+        },
+        ..default()
+    };
+
+    commands.spawn(node_bundle).push_children(&[text]);
 }
 
 pub fn spawn_textbox(
@@ -79,7 +118,7 @@ fn button_system(
     mut text_query: Query<&mut Text>,
 ) {
     for (interaction, mut bg, children) in &mut interaction_query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+        //let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
                 *bg = PRESSED_BUTTON.into();
