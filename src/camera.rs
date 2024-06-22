@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     board::components::Position,
-    graphics::{get_world_position, PIECE_SPEED, TILE_SIZE},
+    graphics::{get_world_position, PIECE_SPEED},
     player::Player,
     states::MainState,
 };
