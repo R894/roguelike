@@ -28,7 +28,7 @@ fn spawn_player(mut commands: Commands) {
             kind: "Player".to_string(),
         },
         Position {
-            v: Vector2Int::new(0, 0),
+            v: Vector2Int::new(1, 1),
         },
     ));
 }
