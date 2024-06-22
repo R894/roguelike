@@ -15,9 +15,25 @@ impl Action for DamageAction {
         health.value = health.value.saturating_sub(self.1);
         if health.value == 0 {
             // the unit is killed
+            despawn_children(world, self.0);
             world.despawn(self.0);
         }
         Ok(Vec::new())
+    }
+}
+
+/// despawns all children of an entity
+///
+/// does not despawn the entity itself
+fn despawn_children(world: &mut World, entity: Entity) {
+    let children_to_despawn: Vec<Entity> = if let Some(children) = world.get::<Children>(entity) {
+        children.iter().cloned().collect()
+    } else {
+        Vec::new()
+    };
+
+    for child in children_to_despawn {
+        world.despawn(child);
     }
 }
 
@@ -37,7 +53,7 @@ impl Action for MeleeHitAction {
             .iter(world)
             .filter(|(_, p)| p.v == self.target)
             .collect::<Vec<_>>();
-        if target_entities.len() == 0 {
+        if target_entities.is_empty() {
             return Err(());
         };
         let result = target_entities
