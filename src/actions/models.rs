@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
+use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Health, Occupier};
+use crate::pieces::components::{Health, Melee, Occupier};
 use crate::vectors::Vector2Int;
 
 use super::Action;
@@ -76,10 +77,41 @@ impl Action for WalkAction {
             .iter(world)
             .any(|p| p.v == self.1)
         {
-            return Err(());
+            let Some(melee) = world.get::<Melee>(self.0) else {
+                return Err(());
+            };
+            return Ok(vec![Box::new(MeleeHitAction {
+                attacker: self.0,
+                target: self.1,
+                damage: melee.damage,
+            })]);
         };
         let mut position = world.get_mut::<Position>(self.0).ok_or(())?;
         position.v = self.1;
+        Ok(Vec::new())
+    }
+}
+
+pub struct DigAction(pub Entity, pub Vector2Int);
+impl Action for DigAction {
+    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        let wall_entity = world
+            .query_filtered::<(Entity, &Position), With<Wall>>()
+            .iter(world)
+            .find_map(|(entity, position)| {
+                if position.v == self.1 {
+                    Some(entity)
+                } else {
+                    None
+                }
+            });
+        if let Some(wall_entity) = wall_entity {
+            despawn_children(world, wall_entity);
+            world.despawn(wall_entity);
+        } else {
+            return Err(());
+        }
+
         Ok(Vec::new())
     }
 }
