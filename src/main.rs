@@ -6,6 +6,7 @@ mod globals;
 mod graphics;
 mod input;
 mod manager;
+mod menu;
 mod pieces;
 mod player;
 mod states;
@@ -41,5 +42,6 @@ fn main() {
         .add_plugins(manager::ManagerPlugin)
         .add_plugins(player::PlayerPlugin)
         .add_plugins(pieces::PiecesPlugin)
+        .add_plugins(menu::MenuPlugin)
         .run();
 }
