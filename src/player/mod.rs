@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     board::components::Position,
     pieces::components::{Actor, Health, Melee, Occupier, Piece},
+    states::MainState,
     vectors::Vector2Int,
 };
 
@@ -10,7 +11,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player);
+        app.add_systems(OnEnter(MainState::Game), spawn_player);
     }
 }
 
