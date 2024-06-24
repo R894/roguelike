@@ -11,6 +11,9 @@ pub struct Position {
 #[derive(Component)]
 pub struct Tile;
 
+#[derive(Component)]
+pub struct Wall;
+
 #[derive(Default, Resource)]
 pub struct BoardRes {
     pub tiles: HashMap<Vector2Int, Entity>,

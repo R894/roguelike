@@ -6,7 +6,7 @@ use std::io::{BufRead, BufReader};
 use crate::pieces::components::Occupier;
 use crate::vectors::Vector2Int;
 
-use super::components::{Position, Tile};
+use super::components::{Position, Tile, Wall};
 use super::CurrentBoard;
 
 pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
@@ -20,7 +20,7 @@ pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
                 let tile = commands.spawn((Position { v }, Tile)).id();
 
                 if char == '#' {
-                    commands.entity(tile).insert(Occupier);
+                    commands.entity(tile).insert(Occupier).insert(Wall);
                 };
                 if char == '~' {};
                 current.tiles.insert(v, tile);
