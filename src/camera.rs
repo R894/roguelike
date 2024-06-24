@@ -21,11 +21,13 @@ fn setup_camera(mut commands: Commands) {
 }
 
 fn follow_player(
-    mut player_query: Query<&Position, With<Player>>,
+    player_query: Query<&Position, With<Player>>,
     mut camera_query: Query<&mut Transform, With<Camera>>,
     time: Res<Time>,
 ) {
-    let player_position = player_query.single_mut();
+    let Ok(player_position) = player_query.get_single() else {
+        return;
+    };
     let mut camera_transform = camera_query.single_mut();
 
     let position = get_world_position(player_position, 900.);
