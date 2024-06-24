@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::graphics::assets::Ascii;
+use crate::{
+    pieces::components::Health,
+    player::Player,
+    states::{GameState, MainState},
+};
 
 pub const NORMAL_BUTTON: Color = Color::rgb(0.8, 0.8, 0.8);
 pub const HOVERED_BUTTON: Color = Color::rgb(0.9, 0.9, 0.9);
@@ -12,13 +16,20 @@ pub struct TextBox;
 pub struct UiPlugin;
 
 #[derive(Resource)]
-pub struct UiFont(Handle<Font>);
+pub struct UiFont(pub Handle<Font>);
+
+#[derive(Component)]
+pub struct UiHealth;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup)
-            .add_systems(Update, button_system)
-            .add_systems(Update, test_ui);
+        app.add_systems(PreStartup, setup)
+            .add_systems(
+                Update,
+                start_button_system.run_if(in_state(MainState::Menu)),
+            )
+            .add_systems(OnEnter(MainState::Game), test_ui)
+            .add_systems(Update, update_ui_health.run_if(in_state(MainState::Game)));
     }
 }
 
@@ -27,21 +38,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(UiFont(font));
 }
 
-pub fn test_ui(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    ascii: Res<Ascii>,
-    font: Res<UiFont>,
-) {
+pub fn test_ui(mut commands: Commands, font: Res<UiFont>) {
     let text = commands
         .spawn(TextBundle::from_section(
-            "Health: 10",
+            "Health: ",
             TextStyle {
                 font: font.0.clone(),
                 font_size: 40.0,
                 color: Color::rgb(0.7, 0.7, 0.7),
             },
         ))
+        .insert(UiHealth)
         .id();
 
     let node_bundle = NodeBundle {
@@ -56,6 +63,16 @@ pub fn test_ui(
     };
 
     commands.spawn(node_bundle).push_children(&[text]);
+}
+
+pub fn update_ui_health(
+    mut text_query: Query<&mut Text, With<UiHealth>>,
+    health_query: Query<&Health, With<Player>>,
+) {
+    let health = health_query.get_single().unwrap_or(&Health { value: 0 });
+    for mut text in &mut text_query {
+        text.sections[0].value = format!("Health: {}", health.value);
+    }
 }
 
 pub fn spawn_textbox(
@@ -110,18 +127,20 @@ pub fn spawn_textbox(
         .id()
 }
 
-fn button_system(
+fn start_button_system(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &Children),
         (Changed<Interaction>, With<Button>),
     >,
     mut text_query: Query<&mut Text>,
+    mut state: ResMut<NextState<MainState>>,
 ) {
     for (interaction, mut bg, children) in &mut interaction_query {
         //let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
                 *bg = PRESSED_BUTTON.into();
+                state.set(MainState::Game);
             }
             Interaction::Hovered => {
                 *bg = HOVERED_BUTTON.into();
