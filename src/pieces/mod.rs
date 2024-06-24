@@ -19,7 +19,7 @@ pub fn spawn_npcs(mut commands: Commands) {
 fn spawn_test_npc(commands: &mut Commands, v: Vector2Int) {
     commands.spawn((
         components::Actor::default(),
-        components::Health { value: 1 },
+        components::Health { value: 10 },
         components::Piece {
             kind: "NPC".to_string(),
         },
