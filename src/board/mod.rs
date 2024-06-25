@@ -11,7 +11,8 @@ pub struct BoardPlugin;
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CurrentBoard>()
-            .add_systems(OnEnter(MainState::Game), systems::spawn_map);
+            .add_systems(OnEnter(MainState::Game), systems::spawn_map)
+            .add_systems(OnExit(MainState::Game), systems::despawn_map);
     }
 }
 

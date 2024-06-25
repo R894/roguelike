@@ -20,11 +20,19 @@ pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
                 let tile = commands.spawn((Position { v }, Tile)).id();
 
                 if char == '#' {
-                    commands.entity(tile).insert(Occupier).insert(Wall);
+                    commands.entity(tile).with_children(|parent| {
+                        parent.spawn(Occupier).insert(Wall).insert(Position { v });
+                    });
                 };
                 if char == '~' {};
                 current.tiles.insert(v, tile);
             }
         }
+    }
+}
+
+pub fn despawn_map(mut commands: Commands, tile_query: Query<Entity, With<Tile>>) {
+    for entity in tile_query.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 }
