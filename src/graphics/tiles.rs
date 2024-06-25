@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    board::components::{Position, Tile},
-    pieces::components::Occupier,
-};
+use crate::board::components::{Position, Tile, Wall};
 
 use super::{assets::Ascii, TILE_SIZE, TILE_Z};
 
@@ -50,10 +47,12 @@ pub fn spawn_sprite(
         .id()
 }
 
+pub fn hide_sprites() {}
+
 pub fn spawn_tile_renderer(
     mut commands: Commands,
-    tile_query: Query<(Entity, &Position), (Added<Tile>, Without<Occupier>)>,
-    wall_query: Query<(Entity, &Position), (Added<Occupier>, With<Tile>)>,
+    tile_query: Query<(Entity, &Position), Added<Tile>>,
+    wall_query: Query<Entity, Added<Wall>>,
     assets: Res<Ascii>,
 ) {
     for (entity, position) in tile_query.iter() {
@@ -80,22 +79,22 @@ pub fn spawn_tile_renderer(
         });
     }
 
-    for (entity, position) in wall_query.iter() {
+    for entity in wall_query.iter() {
         let sprite = Sprite {
             custom_size: Some(Vec2::splat(TILE_SIZE)),
             ..default()
         };
 
-        let v = super::get_world_position(position, TILE_Z);
-        commands.entity(entity).insert(SpriteSheetBundle {
+        let bundle = SpriteSheetBundle {
             sprite,
             texture: assets.image.clone(),
-            transform: Transform::from_translation(v),
+            transform: Transform::from_xyz(0., 0., 1.),
             atlas: TextureAtlas {
                 index: '#' as usize,
                 layout: assets.texture.clone(),
             },
             ..Default::default()
-        });
+        };
+        commands.entity(entity).insert(bundle);
     }
 }
