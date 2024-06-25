@@ -2,10 +2,11 @@ use bevy::prelude::*;
 
 use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Health, Melee, Occupier};
+use crate::pieces::components::{Gold, Health, Occupier};
+use crate::player::Player;
 use crate::vectors::Vector2Int;
 
-use super::Action;
+use super::{Action, GameOverEvent};
 
 pub struct DamageAction(pub Entity, pub u32);
 impl Action for DamageAction {
@@ -16,6 +17,10 @@ impl Action for DamageAction {
         health.value = health.value.saturating_sub(self.1);
         if health.value == 0 {
             // the unit is killed
+            // if its a player send the gameover event
+            if world.get::<Player>(self.0).is_some() {
+                world.send_event(GameOverEvent);
+            }
             despawn_children(world, self.0);
             world.despawn(self.0);
         }
@@ -72,20 +77,15 @@ impl Action for WalkAction {
         if !board.tiles.contains_key(&self.1) {
             return Err(());
         };
+
         if world
             .query_filtered::<&Position, With<Occupier>>()
             .iter(world)
             .any(|p| p.v == self.1)
         {
-            let Some(melee) = world.get::<Melee>(self.0) else {
-                return Err(());
-            };
-            return Ok(vec![Box::new(MeleeHitAction {
-                attacker: self.0,
-                target: self.1,
-                damage: melee.damage,
-            })]);
+            return Err(());
         };
+
         let mut position = world.get_mut::<Position>(self.0).ok_or(())?;
         position.v = self.1;
         Ok(Vec::new())
@@ -96,9 +96,9 @@ pub struct DigAction(pub Entity, pub Vector2Int);
 impl Action for DigAction {
     fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         let wall_entity = world
-            .query_filtered::<(Entity, &Position), With<Wall>>()
+            .query_filtered::<(Entity, &Position, &Occupier), With<Wall>>()
             .iter(world)
-            .find_map(|(entity, position)| {
+            .find_map(|(entity, position, _)| {
                 if position.v == self.1 {
                     Some(entity)
                 } else {
@@ -112,6 +112,25 @@ impl Action for DigAction {
             return Err(());
         }
 
+        Ok(Vec::new())
+    }
+}
+
+pub struct PickupAction(pub Entity, pub Vector2Int);
+impl Action for PickupAction {
+    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        let target_gold = world
+            .query_filtered::<(&Gold, &Position), With<Gold>>()
+            .iter(world)
+            .filter(|(_, p)| p.v == self.1)
+            .map(|(g, _)| g.value)
+            .collect::<Vec<_>>();
+
+        if target_gold.is_empty() {
+            return Err(());
+        }
+        let mut player_gold = world.get_mut::<Gold>(self.0).ok_or(())?;
+        player_gold.value += target_gold[0];
         Ok(Vec::new())
     }
 }

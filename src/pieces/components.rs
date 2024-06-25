@@ -11,6 +11,11 @@ pub struct Health {
 }
 
 #[derive(Component)]
+pub struct Gold {
+    pub value: u32,
+}
+
+#[derive(Component)]
 pub struct Melee {
     pub damage: u32,
 }
@@ -25,3 +30,6 @@ pub struct Piece {
 
 #[derive(Component)]
 pub struct Walk;
+
+#[derive(Component)]
+pub struct ItemPicker;

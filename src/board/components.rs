@@ -18,3 +18,6 @@ pub struct Wall;
 pub struct BoardRes {
     pub tiles: HashMap<Vector2Int, Entity>,
 }
+
+#[derive(Component)]
+pub struct Item;
