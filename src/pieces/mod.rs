@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use components::Piece;
 
 use crate::{board::components::Position, states::MainState, vectors::Vector2Int};
 pub mod components;
@@ -7,7 +8,8 @@ pub struct PiecesPlugin;
 
 impl Plugin for PiecesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(MainState::Game), spawn_npcs);
+        app.add_systems(OnEnter(MainState::Game), spawn_npcs)
+            .add_systems(OnExit(MainState::Game), despawn_pieces);
     }
 }
 
@@ -28,4 +30,10 @@ fn spawn_test_npc(commands: &mut Commands, v: Vector2Int) {
         Position { v },
         components::Walk,
     ));
+}
+
+fn despawn_pieces(mut commands: Commands, query: Query<Entity, With<Piece>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
 }
