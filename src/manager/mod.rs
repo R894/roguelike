@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::actions::{ActionsCompleteEvent, InvalidPlayerActionEvent, TickEvent};
+use crate::actions::{ActionsCompleteEvent, GameOverEvent, InvalidPlayerActionEvent, TickEvent};
 use crate::graphics::GraphicsWaitEvent;
 use crate::input::PlayerInputReadyEvent;
 use crate::states::{GameState, MainState};
@@ -15,6 +15,7 @@ impl Plugin for ManagerPlugin {
                 Update,
                 turn_update_start.run_if(on_event::<PlayerInputReadyEvent>()),
             )
+            .add_systems(Update, game_over.run_if(on_event::<GameOverEvent>()))
             .add_systems(
                 Update,
                 turn_update_end.run_if(on_event::<ActionsCompleteEvent>()),
@@ -47,6 +48,10 @@ fn tick(mut ev_wait: EventReader<GraphicsWaitEvent>, mut ev_tick: EventWriter<Ti
     if ev_wait.read().len() == 0 {
         ev_tick.send(TickEvent);
     }
+}
+
+fn game_over(mut next_state: ResMut<NextState<MainState>>) {
+    next_state.set(MainState::GameOver);
 }
 
 fn turn_update_end(mut next_state: ResMut<NextState<GameState>>) {
