@@ -16,6 +16,7 @@ impl Plugin for ActionsPlugin {
             .add_event::<NextActorEvent>()
             .add_event::<ActionsCompleteEvent>()
             .add_event::<InvalidPlayerActionEvent>()
+            .add_event::<GameOverEvent>()
             .configure_sets(
                 Update,
                 ActionSet::Planning
@@ -57,6 +58,9 @@ pub struct NextActorEvent;
 pub struct ActionsCompleteEvent;
 #[derive(Event)]
 pub struct InvalidPlayerActionEvent;
+
+#[derive(Event)]
+pub struct GameOverEvent;
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 enum ActionSet {
