@@ -5,6 +5,7 @@ pub enum MainState {
     #[default]
     Menu,
     Game,
+    GameOver,
 }
 
 #[derive(Clone, Debug, Default, Hash, Eq, States, PartialEq)]

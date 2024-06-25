@@ -1,10 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    pieces::components::Health,
-    player::Player,
-    states::{GameState, MainState},
-};
+use crate::{pieces::components::Health, player::Player, states::MainState};
 
 pub const NORMAL_BUTTON: Color = Color::rgb(0.8, 0.8, 0.8);
 pub const HOVERED_BUTTON: Color = Color::rgb(0.9, 0.9, 0.9);
@@ -24,10 +20,8 @@ pub struct UiHealth;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, setup)
-            .add_systems(
-                Update,
-                start_button_system.run_if(in_state(MainState::Menu)),
-            )
+            .add_systems(Update, button_system.run_if(in_state(MainState::Menu)))
+            .add_systems(Update, button_system.run_if(in_state(MainState::GameOver)))
             .add_systems(OnEnter(MainState::Game), test_ui)
             .add_systems(Update, update_ui_health.run_if(in_state(MainState::Game)));
     }
@@ -127,7 +121,7 @@ pub fn spawn_textbox(
         .id()
 }
 
-fn start_button_system(
+fn button_system(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &Children),
         (Changed<Interaction>, With<Button>),
@@ -136,17 +130,20 @@ fn start_button_system(
     mut state: ResMut<NextState<MainState>>,
 ) {
     for (interaction, mut bg, children) in &mut interaction_query {
-        //let mut text = text_query.get_mut(children[0]).unwrap();
+        let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
                 *bg = PRESSED_BUTTON.into();
+                text.sections[0].style.color = PRESSED_BUTTON;
                 state.set(MainState::Game);
             }
             Interaction::Hovered => {
                 *bg = HOVERED_BUTTON.into();
+                text.sections[0].style.color = HOVERED_BUTTON;
             }
             Interaction::None => {
                 *bg = NORMAL_BUTTON.into();
+                text.sections[0].style.color = NORMAL_BUTTON;
             }
         }
     }
