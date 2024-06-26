@@ -1,6 +1,8 @@
+mod systems;
+
 use bevy::prelude::*;
 
-use crate::{pieces::components::Health, player::Player, states::MainState};
+use crate::states::MainState;
 
 pub const NORMAL_BUTTON: Color = Color::rgb(0.8, 0.8, 0.8);
 pub const HOVERED_BUTTON: Color = Color::rgb(0.9, 0.9, 0.9);
@@ -17,56 +19,26 @@ pub struct UiFont(pub Handle<Font>);
 #[derive(Component)]
 pub struct UiHealth;
 
+#[derive(Component)]
+pub struct UiGold;
+
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, setup)
             .add_systems(Update, button_system.run_if(in_state(MainState::Menu)))
             .add_systems(Update, button_system.run_if(in_state(MainState::GameOver)))
-            .add_systems(OnEnter(MainState::Game), test_ui)
-            .add_systems(Update, update_ui_health.run_if(in_state(MainState::Game)));
+            .add_systems(OnEnter(MainState::Game), systems::spawn_ui)
+            .add_systems(
+                Update,
+                (systems::update_ui_gold, systems::update_ui_health)
+                    .run_if(in_state(MainState::Game)),
+            );
     }
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font: Handle<Font> = asset_server.load("fonts/FiraSans-Bold.ttf");
     commands.insert_resource(UiFont(font));
-}
-
-pub fn test_ui(mut commands: Commands, font: Res<UiFont>) {
-    let text = commands
-        .spawn(TextBundle::from_section(
-            "Health: ",
-            TextStyle {
-                font: font.0.clone(),
-                font_size: 40.0,
-                color: Color::rgb(0.7, 0.7, 0.7),
-            },
-        ))
-        .insert(UiHealth)
-        .id();
-
-    let node_bundle = NodeBundle {
-        style: Style {
-            width: Val::Percent(100.),
-            height: Val::Percent(100.),
-            align_items: AlignItems::FlexEnd,
-            padding: UiRect::all(Val::Px(14.)),
-            ..default()
-        },
-        ..default()
-    };
-
-    commands.spawn(node_bundle).push_children(&[text]);
-}
-
-pub fn update_ui_health(
-    mut text_query: Query<&mut Text, With<UiHealth>>,
-    health_query: Query<&Health, With<Player>>,
-) {
-    let health = health_query.get_single().unwrap_or(&Health { value: 0 });
-    for mut text in &mut text_query {
-        text.sections[0].value = format!("Health: {}", health.value);
-    }
 }
 
 pub fn spawn_textbox(
@@ -90,9 +62,7 @@ pub fn spawn_textbox(
                 style: Style {
                     width: Val::Px(width),
                     height: Val::Px(height),
-                    // horizontally center child text
                     justify_content: JustifyContent::Center,
-                    // vertically center child text
                     align_items: AlignItems::Center,
                     ..default()
                 },
