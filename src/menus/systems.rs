@@ -1,25 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{
-    states::MainState,
-    ui::{spawn_textbox, UiFont},
-};
+use crate::ui::{spawn_textbox, UiFont};
 
-pub struct MenuPlugin;
+use super::Menu;
 
-#[derive(Component)]
-pub struct Menu;
-
-impl Plugin for MenuPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(MainState::Menu), spawn_menu)
-            .add_systems(OnExit(MainState::Menu), despawn_menu)
-            .add_systems(OnEnter(MainState::GameOver), game_over_menu)
-            .add_systems(OnExit(MainState::GameOver), despawn_menu);
-    }
-}
-
-fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: Res<UiFont>) {
+pub fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: Res<UiFont>) {
     let start_button = spawn_textbox(&mut commands, &asset_server, "Start", (150., 75.));
     let text = TextBundle {
         style: Style {
@@ -62,7 +47,7 @@ fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: Res<
         .push_children(&[start_button]);
 }
 
-fn game_over_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: Res<UiFont>) {
+pub fn game_over_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: Res<UiFont>) {
     let text = TextBundle {
         style: Style {
             width: Val::Auto,
@@ -105,7 +90,7 @@ fn game_over_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: 
         .push_children(&[restart_button]);
 }
 
-fn despawn_menu(mut commands: Commands, query: Query<Entity, With<Menu>>) {
+pub fn despawn_menu(mut commands: Commands, query: Query<Entity, With<Menu>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
