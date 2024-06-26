@@ -16,6 +16,9 @@ impl Plugin for PiecesPlugin {
 pub fn spawn_npcs(mut commands: Commands) {
     spawn_test_npc(&mut commands, Vector2Int::new(3, 5));
     spawn_test_npc(&mut commands, Vector2Int::new(5, 5));
+    spawn_coin(&mut commands, Vector2Int::new(7, 5));
+    spawn_coin(&mut commands, Vector2Int::new(9, 5));
+    spawn_coin(&mut commands, Vector2Int::new(11, 5));
 }
 
 fn spawn_test_npc(commands: &mut Commands, v: Vector2Int) {
@@ -29,6 +32,16 @@ fn spawn_test_npc(commands: &mut Commands, v: Vector2Int) {
         components::Occupier,
         Position { v },
         components::Walk,
+    ));
+}
+
+fn spawn_coin(commands: &mut Commands, v: Vector2Int) {
+    commands.spawn((
+        components::Gold { value: 1 },
+        components::Piece {
+            kind: "Coin".to_string(),
+        },
+        Position { v },
     ));
 }
 
