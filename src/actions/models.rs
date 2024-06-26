@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Gold, Health, Occupier};
+use crate::pieces::components::{Gold, Health, Occupier, Piece};
 use crate::player::Player;
 use crate::vectors::Vector2Int;
 
@@ -41,6 +41,12 @@ fn despawn_children(world: &mut World, entity: Entity) {
     for child in children_to_despawn {
         world.despawn(child);
     }
+}
+
+/// despawns an entity and all its children
+pub fn despawn_recursive(world: &mut World, entity: Entity) {
+    despawn_children(world, entity);
+    world.despawn(entity);
 }
 
 pub struct MeleeHitAction {
@@ -88,7 +94,9 @@ impl Action for WalkAction {
 
         let mut position = world.get_mut::<Position>(self.0).ok_or(())?;
         position.v = self.1;
-        Ok(Vec::new())
+
+        let pickup_action = Box::new(PickupAction(self.0, position.v));
+        Ok(vec![pickup_action])
     }
 }
 
@@ -120,17 +128,19 @@ pub struct PickupAction(pub Entity, pub Vector2Int);
 impl Action for PickupAction {
     fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         let target_gold = world
-            .query_filtered::<(&Gold, &Position), With<Gold>>()
+            .query_filtered::<(Entity, &Gold, &Position), (With<Piece>, Without<Player>)>()
             .iter(world)
-            .filter(|(_, p)| p.v == self.1)
-            .map(|(g, _)| g.value)
+            .filter(|(_, _, p)| p.v == self.1)
+            .map(|(e, g, _)| (e, g.value))
             .collect::<Vec<_>>();
 
         if target_gold.is_empty() {
             return Err(());
         }
         let mut player_gold = world.get_mut::<Gold>(self.0).ok_or(())?;
-        player_gold.value += target_gold[0];
+        player_gold.value += target_gold[0].1;
+        despawn_recursive(world, target_gold[0].0);
+        println!("picked up {} gold", target_gold[0].1);
         Ok(Vec::new())
     }
 }
