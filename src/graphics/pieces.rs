@@ -12,7 +12,8 @@ pub fn spawn_piece_renderer(
     for (entity, position, piece) in query.iter() {
         let sprite_idx = match piece.kind.as_str() {
             "Player" => 1,
-            _ => 63,
+            "Coin" => 9,
+            _ => '?' as usize,
         };
         let sprite = Sprite {
             custom_size: Some(Vec2::splat(TILE_SIZE)),
@@ -20,19 +21,19 @@ pub fn spawn_piece_renderer(
             ..default()
         };
         let v = super::get_world_position(position, PIECE_Z);
-        commands
-            .entity(entity)
-            .insert(SpriteSheetBundle {
-                sprite,
-                texture: assets.image.clone(),
-                transform: Transform::from_translation(v),
-                atlas: TextureAtlas {
-                    index: sprite_idx,
-                    layout: assets.texture.clone(),
-                },
-                ..default()
-            })
-            .with_children(|parent| {
+        commands.entity(entity).insert(SpriteSheetBundle {
+            sprite,
+            texture: assets.image.clone(),
+            transform: Transform::from_translation(v),
+            atlas: TextureAtlas {
+                index: sprite_idx,
+                layout: assets.texture.clone(),
+            },
+            ..default()
+        });
+
+        if sprite_idx == 1 {
+            commands.entity(entity).with_children(|parent| {
                 parent.spawn(SpriteSheetBundle {
                     sprite: Sprite {
                         color: Color::rgb(0.2, 0.2, 0.2),
@@ -43,6 +44,7 @@ pub fn spawn_piece_renderer(
                     ..default()
                 });
             });
+        }
     }
 }
 
