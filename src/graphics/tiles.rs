@@ -66,11 +66,7 @@ pub fn spawn_tile_renderer(
         commands.entity(entity).insert(SpriteSheetBundle {
             sprite,
             texture: assets.image.clone(),
-            transform: Transform::from_translation(Vec3::new(
-                v.x + TILE_SIZE / 8.,
-                v.y + TILE_SIZE / 4.,
-                v.z,
-            )),
+            transform: Transform::from_translation(Vec3::new(v.x, v.y, v.z)),
             atlas: TextureAtlas {
                 index: '.' as usize,
                 layout: assets.texture.clone(),
