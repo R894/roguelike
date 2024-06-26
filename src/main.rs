@@ -6,7 +6,7 @@ mod globals;
 mod graphics;
 mod input;
 mod manager;
-mod menu;
+mod menus;
 mod pieces;
 mod player;
 mod states;
@@ -14,7 +14,6 @@ mod ui;
 mod vectors;
 
 use bevy::prelude::*;
-use camera::CameraPlugin;
 use states::{GameState, MainState};
 
 fn main() {
@@ -33,7 +32,7 @@ fn main() {
         .init_state::<MainState>()
         .init_state::<GameState>()
         .insert_resource(Msaa::Off)
-        .add_plugins(CameraPlugin)
+        .add_plugins(camera::CameraPlugin)
         .add_plugins(actions::ActionsPlugin)
         .add_plugins(ui::UiPlugin)
         .add_plugins(board::BoardPlugin)
@@ -42,6 +41,6 @@ fn main() {
         .add_plugins(manager::ManagerPlugin)
         .add_plugins(player::PlayerPlugin)
         .add_plugins(pieces::PiecesPlugin)
-        .add_plugins(menu::MenuPlugin)
+        .add_plugins(menus::MenuPlugin)
         .run();
 }
