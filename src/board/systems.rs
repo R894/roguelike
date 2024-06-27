@@ -1,32 +1,31 @@
-use bevy::prelude::*;
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
 use crate::pieces::components::Occupier;
-use crate::vectors::Vector2Int;
 
 use super::components::{Position, Tile, Wall};
+use super::dungeon::{tunneler, Area, Dungeon};
 use super::CurrentBoard;
+use bevy::prelude::*;
+use std::collections::HashMap;
 
 pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
-    let file = File::open("assets/map.txt").expect("No map file found");
+    let mut dungeon = Dungeon::new(2);
+    for idx in 0..4 {
+        let tun = match idx % 2 {
+            0 => Box::new(tunneler::LShapeTunneler) as Box<dyn tunneler::Tunneler>,
+            _ => Box::new(tunneler::RandomTunneler) as Box<dyn tunneler::Tunneler>,
+        };
+        dungeon.add_area(Area::new(tun))
+    }
+    dungeon.generate();
+
     current.tiles = HashMap::new();
-
-    for (y, line) in BufReader::new(file).lines().enumerate() {
-        if let Ok(line) = line {
-            for (x, char) in line.chars().enumerate() {
-                let v = Vector2Int::new(x as i32, y as i32);
-                let tile = commands.spawn((Position { v }, Tile)).id();
-
-                if char == '#' {
-                    commands.entity(tile).with_children(|parent| {
-                        parent.spawn(Occupier).insert(Wall).insert(Position { v });
-                    });
-                };
-                current.tiles.insert(v, tile);
-            }
+    for v in dungeon.to_tiles() {
+        let tile = commands.spawn((Position { v }, Tile)).id();
+        if dungeon.walls.contains(&v) {
+            commands.entity(tile).with_children(|parent| {
+                parent.spawn(Occupier).insert(Wall).insert(Position { v });
+            });
         }
+        current.tiles.insert(v, tile);
     }
 }
 

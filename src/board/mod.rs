@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use crate::{states::MainState, vectors::Vector2Int};
 
 pub mod components;
+pub mod dungeon;
 mod systems;
 
 pub struct BoardPlugin;
