@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
-use crate::ui::{spawn_textbox, UiFont};
+use crate::ui::{spawn_button, BorderTexture, UiFont};
 
 use super::Menu;
 
-pub fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: Res<UiFont>) {
-    let start_button = spawn_textbox(&mut commands, &asset_server, "Start", (150., 75.));
+pub fn spawn_menu(mut commands: Commands, border_texture: Res<BorderTexture>, font: Res<UiFont>) {
+    let start_button = spawn_button(&mut commands, &border_texture, &font, "Start", (150., 75.));
     let text = TextBundle {
         style: Style {
             width: Val::Auto,
@@ -47,7 +47,11 @@ pub fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: 
         .push_children(&[start_button]);
 }
 
-pub fn game_over_menu(mut commands: Commands, asset_server: Res<AssetServer>, font: Res<UiFont>) {
+pub fn game_over_menu(
+    mut commands: Commands,
+    border_texture: Res<BorderTexture>,
+    font: Res<UiFont>,
+) {
     let text = TextBundle {
         style: Style {
             width: Val::Auto,
@@ -67,7 +71,13 @@ pub fn game_over_menu(mut commands: Commands, asset_server: Res<AssetServer>, fo
         },
         ..default()
     };
-    let restart_button = spawn_textbox(&mut commands, &asset_server, "Restart", (150., 75.));
+    let restart_button = spawn_button(
+        &mut commands,
+        &border_texture,
+        &font,
+        "Restart",
+        (150., 75.),
+    );
 
     commands
         .spawn(NodeBundle {

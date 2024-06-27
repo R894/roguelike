@@ -16,6 +16,9 @@ pub struct UiPlugin;
 #[derive(Resource)]
 pub struct UiFont(pub Handle<Font>);
 
+#[derive(Resource)]
+pub struct BorderTexture(pub Handle<Image>);
+
 #[derive(Component)]
 pub struct UiHealth;
 
@@ -38,16 +41,20 @@ impl Plugin for UiPlugin {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font: Handle<Font> = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let border_texture: Handle<Image> =
+        asset_server.load("textures/fantasy_ui_borders/panel-border-010.png");
     commands.insert_resource(UiFont(font));
+    commands.insert_resource(BorderTexture(border_texture));
 }
 
-pub fn spawn_textbox(
+pub fn spawn_button(
     commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
-    textbox_text: &str,
+    border_texture: &Res<BorderTexture>,
+    font: &Res<UiFont>,
+    button_text: &str,
     (width, height): (f32, f32),
 ) -> Entity {
-    let image = asset_server.load("textures/fantasy_ui_borders/panel-border-010.png");
+    let image = &border_texture.0;
 
     let slicer = TextureSlicer {
         border: BorderRect::square(22.0),
@@ -75,9 +82,9 @@ pub fn spawn_textbox(
         .insert(TextBox)
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
-                textbox_text,
+                button_text,
                 TextStyle {
-                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                    font: font.0.clone(),
                     font_size: 40.0,
                     color: Color::rgb(0.7, 0.7, 0.7),
                 },
