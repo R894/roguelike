@@ -26,6 +26,9 @@ impl Action for DamageAction {
         }
         Ok(Vec::new())
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 /// despawns all children of an entity
@@ -74,6 +77,9 @@ impl Action for MeleeHitAction {
             .collect::<Vec<_>>();
         Ok(result)
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 pub struct WalkAction(pub Entity, pub Vector2Int);
@@ -97,6 +103,9 @@ impl Action for WalkAction {
 
         let pickup_action = Box::new(PickupAction(self.0, position.v));
         Ok(vec![pickup_action])
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -122,6 +131,9 @@ impl Action for DigAction {
 
         Ok(Vec::new())
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 pub struct PickupAction(pub Entity, pub Vector2Int);
@@ -142,5 +154,8 @@ impl Action for PickupAction {
         despawn_recursive(world, target_gold[0].0);
         println!("picked up {} gold", target_gold[0].1);
         Ok(Vec::new())
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

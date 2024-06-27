@@ -9,15 +9,29 @@ use crate::{board::components::Position, pieces::components::Actor};
 
 use super::models::{MeleeHitAction, WalkAction};
 use super::{
-    ActionsCompleteEvent, ActorQueue, InvalidPlayerActionEvent, NextActorEvent, PendingActions,
+    ActionExecutedEvent, ActionsCompleteEvent, ActorQueue, InvalidPlayerActionEvent,
+    NextActorEvent, PendingActions,
 };
 
 const PLAYER_ATTACK_SCORE: i32 = 100;
 const MOVE_SCORE: i32 = 50;
+
+fn execute_action(action: Box<dyn super::Action>, world: &mut World) -> bool {
+    if let Ok(result) = action.execute(world) {
+        if let Some(mut pending) = world.get_resource_mut::<PendingActions>() {
+            pending.0.extend(result);
+        }
+        world.send_event(ActionExecutedEvent(action));
+        return true;
+    }
+    false
+}
+
 pub fn process_action_queue(world: &mut World) {
     if process_pending_actions(world) {
         return;
     }
+
     let Some(mut queue) = world.get_resource_mut::<ActorQueue>() else {
         return;
     };
@@ -26,6 +40,7 @@ pub fn process_action_queue(world: &mut World) {
         return;
     };
     let Some(mut actor) = world.get_mut::<Actor>(entity) else {
+        world.send_event(NextActorEvent);
         return;
     };
     // clear the Actor vec
@@ -35,11 +50,8 @@ pub fn process_action_queue(world: &mut World) {
 
     let mut success = false;
     for action in possible_actions {
-        if let Ok(result) = action.0.execute(world) {
-            if let Some(mut pending) = world.get_resource_mut::<PendingActions>() {
-                pending.0 = result
-            }
-            success = true;
+        success = success || execute_action(action.0, world);
+        if success {
             break;
         }
     }
@@ -51,24 +63,14 @@ pub fn process_action_queue(world: &mut World) {
 }
 
 fn process_pending_actions(world: &mut World) -> bool {
-    // returns true if at least one pending action has been processed
-    // take action objects without holding the mutable reference to the world
     let pending = match world.get_resource_mut::<PendingActions>() {
         Some(mut res) => res.0.drain(..).collect::<Vec<_>>(),
         _ => return false,
     };
-    let mut next = Vec::new();
     let mut success = false;
     for action in pending {
-        if let Ok(result) = action.execute(world) {
-            next.extend(result);
-            success = true;
-        }
+        success = success || execute_action(action, world);
     }
-    // if there are any new actions assign them back to the resource
-    // should be safe to unwrap as we confirmed the resource at the beginning
-    let mut res = world.get_resource_mut::<PendingActions>().unwrap();
-    res.0 = next;
     success
 }
 
