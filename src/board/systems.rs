@@ -24,7 +24,6 @@ pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
                         parent.spawn(Occupier).insert(Wall).insert(Position { v });
                     });
                 };
-                if char == '~' {};
                 current.tiles.insert(v, tile);
             }
         }
