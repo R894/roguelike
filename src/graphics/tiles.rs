@@ -47,8 +47,6 @@ pub fn spawn_sprite(
         .id()
 }
 
-pub fn hide_sprites() {}
-
 pub fn spawn_tile_renderer(
     mut commands: Commands,
     tile_query: Query<(Entity, &Position), Added<Tile>>,
