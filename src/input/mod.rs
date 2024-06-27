@@ -5,6 +5,8 @@ use bevy::prelude::*;
 use crate::actions::models::{DigAction, MeleeHitAction, WalkAction};
 use crate::actions::{Action, ActorQueue};
 use crate::board::components::Position;
+use crate::graphics::assets::Ascii;
+use crate::graphics::TILE_SIZE;
 use crate::pieces::components::{Actor, Melee};
 use crate::player::Player;
 use crate::states::GameState;
@@ -19,6 +21,14 @@ impl Plugin for InputPlugin {
             .add_systems(
                 Update,
                 player_position.run_if(in_state(GameState::PlayerInput)),
+            )
+            .add_systems(
+                OnEnter(ActionDirectionSelectionState::Pending),
+                display_action_arrows,
+            )
+            .add_systems(
+                OnExit(ActionDirectionSelectionState::Pending),
+                clear_action_arrows,
             );
     }
 }
@@ -30,8 +40,12 @@ const DIR_KEY_MAPPING: [(KeyCode, Vector2Int); 4] = [
     (KeyCode::KeyD, Vector2Int::RIGHT),
 ];
 
+const UP_INDEX: usize = '^' as usize;
+const LEFT_INDEX: usize = '<' as usize;
+const RIGHT_INDEX: usize = '>' as usize;
+
 #[derive(Clone, Debug, Default, Hash, Eq, States, PartialEq)]
-enum ActionDirectionSelectionState {
+pub enum ActionDirectionSelectionState {
     #[default]
     None,
     Pending,
@@ -39,6 +53,9 @@ enum ActionDirectionSelectionState {
 
 #[derive(Event)]
 pub struct PlayerInputReadyEvent;
+
+#[derive(Component)]
+pub struct Arrows;
 
 fn player_position(
     keys: ResMut<ButtonInput<KeyCode>>,
@@ -101,5 +118,88 @@ fn player_position(
         actor.0 = vec![move_action, melee_action];
         queue.0 = VecDeque::from([entity]);
         ev_input.send(PlayerInputReadyEvent);
+    }
+}
+
+pub fn display_action_arrows(
+    mut comands: Commands,
+    player_query: Query<Entity, With<Player>>,
+    assets: Res<Ascii>,
+) {
+    if let Ok(entity) = player_query.get_single() {
+        spawn_arrows(&mut comands, entity, assets);
+    }
+}
+
+pub fn spawn_arrows(commands: &mut Commands, entity: Entity, assets: Res<Ascii>) {
+    let base_sprite = Sprite {
+        color: Color::rgba(1., 1., 1., 0.5),
+        custom_size: Some(Vec2::splat(TILE_SIZE)),
+        ..default()
+    };
+
+    let arrow_up = spawn_arrow(
+        commands,
+        Vec3::new(0., 1. * TILE_SIZE, 50.),
+        base_sprite.clone(),
+        &assets,
+        UP_INDEX,
+    );
+
+    let mut down_sprite = base_sprite.clone();
+    down_sprite.flip_y = true;
+    let arrow_down = spawn_arrow(
+        commands,
+        Vec3::new(0.0, -TILE_SIZE, 50.0),
+        down_sprite,
+        &assets,
+        UP_INDEX,
+    );
+
+    let arrow_left = spawn_arrow(
+        commands,
+        Vec3::new(-TILE_SIZE, 0.0, 50.0),
+        base_sprite.clone(),
+        &assets,
+        LEFT_INDEX,
+    );
+
+    let arrow_right = spawn_arrow(
+        commands,
+        Vec3::new(TILE_SIZE, 0.0, 50.0),
+        base_sprite,
+        &assets,
+        RIGHT_INDEX,
+    );
+    commands
+        .entity(entity)
+        .push_children(&[arrow_up, arrow_down, arrow_left, arrow_right]);
+}
+
+fn spawn_arrow(
+    commands: &mut Commands,
+    position: Vec3,
+    sprite: Sprite,
+    assets: &Res<Ascii>,
+    index: usize,
+) -> Entity {
+    commands
+        .spawn(SpriteSheetBundle {
+            sprite,
+            texture: assets.image.clone(),
+            transform: Transform::from_translation(position),
+            atlas: TextureAtlas {
+                index,
+                layout: assets.texture.clone(),
+            },
+            ..Default::default()
+        })
+        .insert(Arrows)
+        .id()
+}
+
+pub fn clear_action_arrows(mut commands: Commands, arrow_query: Query<Entity, With<Arrows>>) {
+    for entity in arrow_query.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 }
