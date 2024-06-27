@@ -1,8 +1,20 @@
+use std::collections::VecDeque;
+
 use bevy::prelude::*;
 
-use crate::{board::components::Position, pieces::components::Piece};
+use crate::{
+    actions::{
+        models::{MeleeHitAction, WalkAction},
+        ActionExecutedEvent,
+    },
+    board::components::Position,
+    pieces::components::Piece,
+};
 
-use super::{assets::Ascii, PIECE_SPEED, PIECE_Z, POSITION_TOLERANCE, TILE_SIZE};
+use super::{
+    assets::{Ascii, PathAnimator},
+    PIECE_SPEED, PIECE_Z, POSITION_TOLERANCE, TILE_SIZE,
+};
 
 pub fn spawn_piece_renderer(
     mut commands: Commands,
@@ -48,25 +60,71 @@ pub fn spawn_piece_renderer(
     }
 }
 
-pub fn update_piece_position(
-    mut query: Query<(&Position, &mut Transform), With<Piece>>,
+pub fn path_animator_update(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut PathAnimator, &mut Transform)>,
     time: Res<Time>,
     mut ev_wait: EventWriter<super::GraphicsWaitEvent>,
 ) {
-    let mut animating = false;
-    for (position, mut transform) in query.iter_mut() {
-        let target = super::get_world_position(position, PIECE_Z);
+    for (entity, mut animator, mut transform) in query.iter_mut() {
+        if animator.path.is_empty() {
+            // this entity has completed it's animation
+            commands.entity(entity).remove::<PathAnimator>();
+            continue;
+        }
+        ev_wait.send(super::GraphicsWaitEvent);
+        let target = *animator.path.front().unwrap();
         let d = (target - transform.translation).length();
         if d > POSITION_TOLERANCE {
-            transform.translation = transform
-                .translation
-                .lerp(target, PIECE_SPEED * time.delta_seconds());
-            animating = true;
+            transform.translation = transform.translation.lerp(
+                target,
+                animator.speed_modifier * PIECE_SPEED * time.delta_seconds(),
+            );
         } else {
+            // the entity is at the desired path position
             transform.translation = target;
+            animator.path.pop_front();
         }
     }
-    if animating {
-        ev_wait.send(super::GraphicsWaitEvent);
+}
+
+pub fn walk_animation(
+    mut commands: Commands,
+    mut ev_action: EventReader<ActionExecutedEvent>,
+    mut ev_wait: EventWriter<super::GraphicsWaitEvent>,
+) {
+    for ev in ev_action.read() {
+        let action = ev.0.as_any();
+        if let Some(action) = action.downcast_ref::<WalkAction>() {
+            let target = super::get_world_vec(action.1, PIECE_Z);
+            commands.entity(action.0).insert(PathAnimator {
+                path: VecDeque::from([target]),
+                speed_modifier: 1.0,
+            });
+            ev_wait.send(super::GraphicsWaitEvent);
+        }
+    }
+}
+
+pub fn melee_animation(
+    mut commands: Commands,
+    query: Query<&Position>,
+    mut ev_action: EventReader<ActionExecutedEvent>,
+    mut ev_wait: EventWriter<super::GraphicsWaitEvent>,
+) {
+    for ev in ev_action.read() {
+        let action = ev.0.as_any();
+        if let Some(action) = action.downcast_ref::<MeleeHitAction>() {
+            let Ok(base_position) = query.get(action.attacker) else {
+                continue;
+            };
+            let base = super::get_world_position(base_position, PIECE_Z);
+            let target = base + 0.25 * (super::get_world_vec(action.target, PIECE_Z) - base);
+            commands.entity(action.attacker).insert(PathAnimator {
+                path: VecDeque::from([target, base]),
+                speed_modifier: 2.0,
+            });
+            ev_wait.send(super::GraphicsWaitEvent);
+        }
     }
 }

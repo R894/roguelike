@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use bevy::prelude::*;
 
 #[derive(Resource)]
@@ -7,4 +9,7 @@ pub struct Ascii {
 }
 
 #[derive(Component)]
-pub struct AsciiText;
+pub struct PathAnimator {
+    pub path: VecDeque<Vec3>,
+    pub speed_modifier: f32,
+}
