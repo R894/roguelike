@@ -33,3 +33,6 @@ pub struct Walk;
 
 #[derive(Component)]
 pub struct ItemPicker;
+
+#[derive(Component)]
+pub struct Item;
