@@ -2,21 +2,24 @@ use std::{cell::RefCell, collections::HashSet};
 
 use crate::vectors::Vector2Int;
 
-use super::{room::Room, tunneler::Tunneler};
+use super::{
+    room::{Room, RoomGenerator},
+    tunneler::Tunneler,
+};
 
 pub struct Area {
     pub rooms: Vec<Room>,
     pub paths: RefCell<Vec<Vec<Vector2Int>>>,
     pub tunneler: Box<dyn Tunneler>,
-    pub walls: RefCell<HashSet<Vector2Int>>,
+    pub room_generator: Box<dyn RoomGenerator>,
 }
 impl Area {
-    pub fn new(tunneler: Box<dyn Tunneler>) -> Self {
+    pub fn new(tunneler: Box<dyn Tunneler>, room_generator: Box<dyn RoomGenerator>) -> Self {
         Area {
             rooms: Vec::new(),
             paths: RefCell::new(Vec::new()),
             tunneler,
-            walls: RefCell::new(HashSet::new()),
+            room_generator,
         }
     }
 
@@ -47,12 +50,6 @@ impl Area {
                 *v += d;
             }
         }
-
-        let mut new_walls = HashSet::new();
-        for &w in self.walls.borrow().iter() {
-            new_walls.insert(w + d);
-        }
-        *self.walls.borrow_mut() = new_walls;
     }
 
     pub fn join_rooms(&self, a: &Room, b: &Room) -> Vec<Vector2Int> {
@@ -91,28 +88,18 @@ impl Area {
 
         // Update self's paths and walls
         self.paths.borrow_mut().push(path.clone());
-        self.update_walls_along_path(&path);
-        other.update_walls_along_path(&path);
-
         path
     }
 
-    pub fn update_walls_along_path(&self, path: &[Vector2Int]) {
-        for point in path {
-            if self.walls.borrow().contains(point) {
-                self.walls.borrow_mut().remove(point);
-            }
-        }
-    }
-
     pub fn generate_rooms(&mut self) {
-        self.rooms = vec![
-            Room::new(Vector2Int::new(0, 0), Vector2Int::new(4, 6)),
-            Room::new(Vector2Int::new(10, 2), Vector2Int::new(14, 8)),
-        ];
-        self.paths = vec![self.join_rooms(&self.rooms[0], &self.rooms[1])].into();
-        self.add_walls();
-        self.remove_path_obstacles();
+        let result = self.room_generator.generate();
+        self.rooms = result.rooms;
+
+        self.paths.borrow_mut().clear();
+        for connection in &result.connections {
+            let path = self.join_rooms(&self.rooms[connection.0], &self.rooms[connection.1]);
+            self.paths.borrow_mut().push(path);
+        }
     }
 
     pub fn to_tiles(&self) -> HashSet<Vector2Int> {
@@ -120,42 +107,6 @@ impl Area {
             .iter()
             .flat_map(|r| r.to_tiles())
             .chain(self.paths.borrow().iter().flatten().copied())
-            .chain(self.walls.borrow().iter().copied())
             .collect()
-    }
-
-    pub fn add_walls(&mut self) {
-        let bounds = self.get_bounds();
-        let min_x = bounds.0.x;
-        let max_x = bounds.1.x;
-        let min_y = bounds.0.y;
-        let max_y = bounds.1.y;
-
-        let occupied_tiles: HashSet<Vector2Int> = self.to_tiles();
-
-        for room in self.rooms.iter() {
-            for &wall in room.walls.iter() {
-                self.walls.borrow_mut().insert(wall);
-            }
-        }
-
-        for y in min_y..=max_y {
-            for x in min_x..=max_x {
-                let tile = Vector2Int::new(x, y);
-                if !occupied_tiles.contains(&tile) {
-                    self.walls.borrow_mut().insert(tile);
-                }
-            }
-        }
-    }
-
-    pub fn remove_path_obstacles(&mut self) {
-        for path in self.paths.borrow().iter() {
-            for point in path {
-                if self.walls.borrow().contains(point) {
-                    self.walls.borrow_mut().remove(point);
-                }
-            }
-        }
     }
 }

@@ -5,7 +5,7 @@ use crate::{states::MainState, vectors::Vector2Int};
 
 pub mod components;
 pub mod dungeon;
-mod systems;
+pub mod systems;
 
 pub struct BoardPlugin;
 
@@ -21,3 +21,6 @@ impl Plugin for BoardPlugin {
 pub struct CurrentBoard {
     pub tiles: HashMap<Vector2Int, Entity>,
 }
+
+#[derive(Resource)]
+pub struct ValidSpots(pub Vec<Vector2Int>);

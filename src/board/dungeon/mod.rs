@@ -1,15 +1,14 @@
-// board/dungeon/mod.rs
 use std::collections::HashSet;
 
 use crate::vectors::Vector2Int;
 
 mod area;
-mod room;
+pub mod room;
 pub mod tunneler;
 
 pub use area::Area;
 
-const AREA_SPACING: i32 = 4;
+const AREA_SPACING: i32 = 0;
 
 pub struct Dungeon {
     pub areas: Vec<Area>,
@@ -28,6 +27,7 @@ impl Dungeon {
             walls: HashSet::new(),
         }
     }
+
     pub fn add_area(&mut self, area: Area) {
         self.areas.push(area);
         let idx = self.areas.len() - 1;
@@ -35,17 +35,24 @@ impl Dungeon {
         // insert the index to appropriate row vec
         self.grid[idx % row_count].push(idx);
     }
+
     pub fn generate(&mut self) {
         for area in self.areas.iter_mut() {
             area.generate_rooms();
         }
         self.position_areas();
         self.connect_areas();
-        self.extend_walls();
+        self.add_walls();
     }
+
     pub fn to_tiles(&self) -> HashSet<Vector2Int> {
-        self.areas.iter().flat_map(|a| a.to_tiles()).collect()
+        self.areas
+            .iter()
+            .flat_map(|a| a.to_tiles())
+            .chain(self.walls.iter().copied())
+            .collect()
     }
+
     fn position_areas(&mut self) {
         let column_count = self.grid[0].len();
 
@@ -85,6 +92,11 @@ impl Dungeon {
             }
         }
     }
+
+    pub fn get_valid_spots(&self) -> Vec<Vector2Int> {
+        self.areas.iter().flat_map(|a| a.to_tiles()).collect()
+    }
+
     fn connect_areas(&mut self) {
         // connect areas based on their grid location
         let mut pairs = Vec::new();
@@ -104,19 +116,31 @@ impl Dungeon {
             let path = self.areas[*pair.0].join_area(&self.areas[pair.1]);
             self.areas[*pair.0].paths.borrow_mut().push(path);
         }
-
-        self.remove_area_path_obstacles();
     }
 
-    fn remove_area_path_obstacles(&mut self) {
-        for area in self.areas.iter_mut() {
-            area.remove_path_obstacles();
-        }
-    }
-
-    fn extend_walls(&mut self) {
+    fn get_bounds(&self) -> (Vector2Int, Vector2Int) {
+        let mut min = Vector2Int::new(i32::MAX, i32::MAX);
+        let mut max = Vector2Int::new(i32::MIN, i32::MIN);
         for area in self.areas.iter() {
-            self.walls.extend(area.walls.borrow().iter().copied());
+            let (a_min, a_max) = area.get_bounds();
+            min.x = min.x.min(a_min.x);
+            min.y = min.y.min(a_min.y);
+            max.x = max.x.max(a_max.x);
+            max.y = max.y.max(a_max.y);
+        }
+        (min, max)
+    }
+
+    fn add_walls(&mut self) {
+        let (min, max) = self.get_bounds();
+        for x in min.x - 1..=max.x + 1 {
+            for y in min.y - 1..=max.y + 1 {
+                let point = Vector2Int::new(x, y);
+                let is_inside = self.areas.iter().any(|a| a.to_tiles().contains(&point));
+                if !is_inside {
+                    self.walls.insert(point);
+                }
+            }
         }
     }
 }
