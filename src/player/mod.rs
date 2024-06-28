@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    board::components::Position,
+    board::{components::Position, systems::spawn_map, ValidSpots},
     pieces::components::{Actor, Gold, Health, ItemPicker, Melee, Occupier, Piece},
     states::MainState,
     vectors::Vector2Int,
@@ -11,14 +11,14 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(MainState::Game), spawn_player);
+        app.add_systems(OnEnter(MainState::Game), spawn_player.after(spawn_map));
     }
 }
 
 #[derive(Component)]
 pub struct Player;
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
     commands.spawn((
         Actor::default(),
         Player,
@@ -31,7 +31,7 @@ fn spawn_player(mut commands: Commands) {
         },
         Gold { value: 0 },
         Position {
-            v: Vector2Int::new(1, 1),
+            v: valid_spots.0[0],
         },
     ));
 }

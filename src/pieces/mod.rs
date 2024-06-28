@@ -1,27 +1,31 @@
 use bevy::prelude::*;
 use components::Piece;
+use rand::Rng;
 
-use crate::{board::components::Position, states::MainState, vectors::Vector2Int};
+use crate::{
+    board::{components::Position, systems::spawn_map, ValidSpots},
+    states::MainState,
+    vectors::Vector2Int,
+};
 pub mod components;
 
 pub struct PiecesPlugin;
 
 impl Plugin for PiecesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(MainState::Game), spawn_npcs)
+        app.add_systems(OnEnter(MainState::Game), spawn_npcs.after(spawn_map))
             .add_systems(OnExit(MainState::Game), despawn_pieces);
     }
 }
 
-pub fn spawn_npcs(mut commands: Commands) {
-    spawn_test_npc(&mut commands, Vector2Int::new(3, 5));
-    spawn_test_npc(&mut commands, Vector2Int::new(5, 5));
-    spawn_coin(&mut commands, Vector2Int::new(7, 5));
-    spawn_coin(&mut commands, Vector2Int::new(9, 5));
-    spawn_coin(&mut commands, Vector2Int::new(11, 5));
+pub fn spawn_npcs(mut commands: Commands, valid_spots: Res<ValidSpots>) {
+    for _ in 0..10 {
+        spawn_coin(&mut commands, &valid_spots);
+    }
 }
 
-fn spawn_test_npc(commands: &mut Commands, v: Vector2Int) {
+fn spawn_test_npc(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
+    let rand = rand::thread_rng().gen_range(0..valid_spots.0.len());
     commands.spawn((
         components::Actor::default(),
         components::Health { value: 10 },
@@ -30,18 +34,23 @@ fn spawn_test_npc(commands: &mut Commands, v: Vector2Int) {
         },
         components::Melee { damage: 1 },
         components::Occupier,
-        Position { v },
+        Position {
+            v: valid_spots.0[rand],
+        },
         components::Walk,
     ));
 }
 
-fn spawn_coin(commands: &mut Commands, v: Vector2Int) {
+fn spawn_coin(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
+    let rand = rand::thread_rng().gen_range(0..valid_spots.0.len());
     commands.spawn((
         components::Gold { value: 1 },
         components::Piece {
             kind: "Coin".to_string(),
         },
-        Position { v },
+        Position {
+            v: valid_spots.0[rand],
+        },
     ));
 }
 
