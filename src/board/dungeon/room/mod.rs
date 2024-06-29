@@ -1,6 +1,11 @@
+mod circle_room;
+mod square_room;
+
 use std::collections::HashSet;
 
+use circle_room::CircleRoom;
 use rand::prelude::*;
+use square_room::SquareRoom;
 
 use crate::vectors::Vector2Int;
 
@@ -9,7 +14,7 @@ pub trait RoomGenerator {
 }
 
 pub struct GeneratorResult {
-    pub rooms: Vec<Room>,
+    pub rooms: Vec<Box<dyn Room>>,
     pub connections: Vec<(usize, usize)>,
 }
 
@@ -30,6 +35,18 @@ impl BubbleGenerator {
             rng.gen_range(self.room_size.0..=self.room_size.1) as i32,
         )
     }
+
+    fn generate_room(&self, min_corner: Vector2Int, max_corner: Vector2Int) -> Box<dyn Room> {
+        let mut rng = thread_rng();
+        if rng.gen_bool(0.5) {
+            Box::new(SquareRoom::new(min_corner, max_corner))
+        } else {
+            Box::new(CircleRoom::new(
+                min_corner,
+                rng.gen_range(self.room_size.0 as i32..=self.room_size.1 as i32),
+            ))
+        }
+    }
 }
 impl RoomGenerator for BubbleGenerator {
     fn generate(&self) -> GeneratorResult {
@@ -37,15 +54,16 @@ impl RoomGenerator for BubbleGenerator {
         let mut connections = Vec::new();
 
         let (w, h) = self.random_dim();
-        let mut rooms = vec![Room::new(Vector2Int::new(0, 0), Vector2Int::new(w, h))];
-        // helper value for random point bounds
+        let mut rooms = vec![self.generate_room(Vector2Int::new(0, 0), Vector2Int::new(w, h))];
+        let count = rng.gen_range(self.room_count.0..=self.room_count.1);
+
         let max_dist = self.room_size.1 as i32;
 
-        let count = rng.gen_range(self.room_count.0..=self.room_count.1);
         for _ in 0..=count {
             loop {
-                // take a random existing room as a base
+                // Randomly select an existing room as a base for the new room
                 let prev_idx = rng.gen_range(0..rooms.len());
+
                 // pick a random point around prev's centre
                 let centre = rooms[prev_idx].centre();
                 let a = Vector2Int::new(
@@ -61,75 +79,40 @@ impl RoomGenerator for BubbleGenerator {
                     a.y + *[-h, h].choose(&mut rng).unwrap(),
                 );
 
-                let r = Room::new(a, b);
-                // check for overlaps with the other rooms
+                let new_room = self.generate_room(a, b);
+                // Check for intersections with existing rooms
                 if rooms
                     .iter()
-                    .any(|other| r.intersects(other, self.room_padding))
+                    .any(|other| new_room.intersects(&**other, self.room_padding))
                 {
                     continue;
                 }
+
+                // Add connection between this room and the selected previous room
                 connections.push((prev_idx, rooms.len()));
 
-                // try creating a second connection
+                // Optionally add an extra random connection
                 if rng.gen_bool(self.extra_connection_chance) {
                     connections.push((rng.gen_range(0..rooms.len()), rooms.len()));
                 }
-                rooms.push(Room::new(a, b));
-                // if the room is valid, we can break the randomize loop
-                // and move to the next one
+
+                // Add the new room to the list
+                rooms.push(new_room);
+
+                // Break the loop for successful room placement
                 break;
             }
         }
+
         GeneratorResult { rooms, connections }
     }
 }
-pub struct Room {
-    pub a: Vector2Int,
-    pub b: Vector2Int,
-}
 
-impl Room {
-    pub fn new(a: Vector2Int, b: Vector2Int) -> Room {
-        Room {
-            a: Vector2Int::new(a.x.min(b.x), a.y.min(b.y)),
-            b: Vector2Int::new(a.x.max(b.x), a.y.max(b.y)),
-        }
-    }
-
-    pub fn corners(&self) -> [Vector2Int; 4] {
-        [
-            Vector2Int::new(self.a.x, self.a.y),
-            Vector2Int::new(self.b.x, self.a.y),
-            Vector2Int::new(self.b.x, self.b.y),
-            Vector2Int::new(self.a.x, self.b.y),
-        ]
-    }
-
-    pub fn random_point(&self) -> Vector2Int {
-        let mut rng = thread_rng();
-        let x = rng.gen_range(self.a.x + 1..self.b.x);
-        let y = rng.gen_range(self.a.y + 1..self.b.y);
-        Vector2Int::new(x, y)
-    }
-
-    pub fn to_tiles(&self) -> HashSet<Vector2Int> {
-        (self.a.y..=self.b.y)
-            .flat_map(|y| (self.a.x..=self.b.x).map(move |x| Vector2Int::new(x, y)))
-            .collect()
-    }
-
-    pub fn centre(&self) -> Vector2Int {
-        Vector2Int::new((self.b.x + self.a.x) / 2, (self.b.y + self.a.y) / 2)
-    }
-    pub fn intersects(&self, other: &Room, border: Option<u32>) -> bool {
-        let b = match border {
-            Some(a) => a as i32,
-            None => 0,
-        };
-        !(other.a.x > self.b.x + b
-            || other.b.x < self.a.x - b
-            || other.a.y > self.b.y + b
-            || other.b.y < self.a.y - b)
-    }
+pub trait Room {
+    fn random_point(&self) -> Vector2Int;
+    fn to_tiles(&self) -> HashSet<Vector2Int>;
+    fn centre(&self) -> Vector2Int;
+    fn corners(&self) -> [Vector2Int; 4];
+    fn intersects(&self, other: &dyn Room, border: Option<u32>) -> bool;
+    fn shift(&mut self, offset: Vector2Int);
 }
