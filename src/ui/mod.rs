@@ -98,6 +98,7 @@ pub fn spawn_button(
         .id()
 }
 
+#[allow(clippy::type_complexity)]
 fn button_system(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &Children),
