@@ -55,10 +55,8 @@ impl Room for CircleRoom {
         let other_center = other.centre();
 
         // check if the other room is within the circle radius
-        let dx = other_center.x - self.center.x;
-        let dy = other_center.y - self.center.y;
-        if dx.pow(2) + dy.pow(2) <= (self.radius + border_offset).pow(2) {
-            return true;
+        if self.center.distance(other_center) > self.radius + border_offset {
+            return false;
         }
 
         // if it isnt then check if the other room intersects the circle
