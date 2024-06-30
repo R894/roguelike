@@ -1,10 +1,13 @@
 use crate::pieces::components::Occupier;
+use crate::player::Player;
 
 use super::components::{Position, Tile, Wall};
 use super::dungeon::{room, tunneler, Area, Dungeon};
 use super::{CurrentBoard, ValidSpots};
 use bevy::prelude::*;
 use std::collections::HashMap;
+
+const VISIBILITY_RANGE: i32 = 10;
 
 pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
     let mut dungeon = Dungeon::new(2);
@@ -29,13 +32,34 @@ pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
 
     current.tiles = HashMap::new();
     for v in dungeon.to_tiles() {
-        let tile = commands.spawn((Position { v }, Tile)).id();
+        let tile = commands
+            .spawn((
+                Position { v },
+                Tile {
+                    visible: false,
+                    seen: false,
+                },
+            ))
+            .id();
         if dungeon.walls.contains(&v) {
             commands.entity(tile).with_children(|parent| {
                 parent.spawn(Occupier).insert(Wall).insert(Position { v });
             });
         }
         current.tiles.insert(v, tile);
+    }
+}
+
+pub fn update_tile_visibility(
+    player_query: Query<&Position, (With<Player>, Changed<Position>)>,
+    mut tile_query: Query<(&mut Tile, &Position), Without<Player>>,
+) {
+    let Ok(player_position) = player_query.get_single() else {
+        return;
+    };
+
+    for (mut tile, position) in tile_query.iter_mut() {
+        tile.visible = position.v.distance(player_position.v) <= VISIBILITY_RANGE;
     }
 }
 

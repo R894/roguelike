@@ -9,7 +9,10 @@ pub struct Position {
 }
 
 #[derive(Component)]
-pub struct Tile;
+pub struct Tile {
+    pub visible: bool,
+    pub seen: bool,
+}
 
 #[derive(Component)]
 pub struct Wall;

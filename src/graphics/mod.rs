@@ -29,7 +29,11 @@ impl Plugin for GraphicsPlugin {
             )
             .add_systems(
                 Update,
-                (tiles::spawn_tile_renderer, pieces::spawn_piece_renderer),
+                (
+                    tiles::spawn_tile_renderer,
+                    tiles::update_tile_visibility,
+                    pieces::spawn_piece_renderer,
+                ),
             );
     }
 }

@@ -23,30 +23,6 @@ pub fn setup(
     });
 }
 
-pub fn spawn_sprite(
-    commands: &mut Commands,
-    translation: (f32, f32, f32),
-    sprite_index: usize,
-    sprite: Sprite,
-    ascii: &Res<Ascii>,
-) -> Entity {
-    commands
-        .spawn(SpriteSheetBundle {
-            sprite,
-            transform: Transform {
-                translation: Vec3::new(translation.0, translation.1, translation.2),
-                ..default()
-            },
-            texture: ascii.image.clone(),
-            atlas: TextureAtlas {
-                index: sprite_index,
-                layout: ascii.texture.clone(),
-            },
-            ..default()
-        })
-        .id()
-}
-
 pub fn spawn_tile_renderer(
     mut commands: Commands,
     tile_query: Query<(Entity, &Position), Added<Tile>>,
@@ -90,5 +66,15 @@ pub fn spawn_tile_renderer(
             ..Default::default()
         };
         commands.entity(entity).insert(bundle);
+    }
+}
+
+pub fn update_tile_visibility(mut query: Query<(&mut Visibility, &Tile), Changed<Tile>>) {
+    for (mut visibility, tile) in query.iter_mut() {
+        if !tile.visible {
+            *visibility = Visibility::Hidden;
+        } else {
+            *visibility = Visibility::Visible;
+        }
     }
 }
