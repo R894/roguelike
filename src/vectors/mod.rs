@@ -14,11 +14,19 @@ impl Vector2Int {
     pub const DOWN: Vector2Int = Vector2Int { x: 0, y: -1 };
     pub const LEFT: Vector2Int = Vector2Int { x: -1, y: 0 };
     pub const RIGHT: Vector2Int = Vector2Int { x: 1, y: 0 };
+
     pub fn new(x: i32, y: i32) -> Vector2Int {
         Vector2Int { x, y }
     }
+
     pub fn manhattan(&self, other: Vector2Int) -> i32 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
+    }
+
+    pub fn distance(&self, other: Vector2Int) -> i32 {
+        let dx = (self.x - other.x).pow(2) as f64;
+        let dy = (self.y - other.y).pow(2) as f64;
+        (dx + dy).sqrt() as i32
     }
 }
 
