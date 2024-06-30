@@ -5,7 +5,6 @@ use rand::Rng;
 use crate::{
     board::{components::Position, systems::spawn_map, ValidSpots},
     states::MainState,
-    vectors::Vector2Int,
 };
 pub mod components;
 

@@ -4,7 +4,6 @@ use crate::{
     board::{components::Position, systems::spawn_map, ValidSpots},
     pieces::components::{Actor, Gold, Health, ItemPicker, Melee, Occupier, Piece},
     states::MainState,
-    vectors::Vector2Int,
 };
 
 pub struct PlayerPlugin;
