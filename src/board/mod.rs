@@ -13,7 +13,10 @@ impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CurrentBoard>()
             .add_systems(OnEnter(MainState::Game), systems::spawn_map)
-            .add_systems(Update, systems::update_tile_visibility)
+            .add_systems(
+                Update,
+                systems::update_tile_visibility.run_if(in_state(MainState::Game)),
+            )
             .add_systems(OnExit(MainState::Game), systems::despawn_map);
     }
 }

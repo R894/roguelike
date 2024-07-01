@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::vectors::Vector2Int;
 use bevy::prelude::*;
@@ -16,6 +16,9 @@ pub struct Tile {
 
 #[derive(Component)]
 pub struct Wall;
+
+#[derive(Component)]
+pub struct VisionBlocker;
 
 #[derive(Default, Resource)]
 pub struct BoardRes {
