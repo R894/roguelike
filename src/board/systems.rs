@@ -8,7 +8,7 @@ use super::{CurrentBoard, ValidSpots};
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-const VISIBILITY_RANGE: i32 = 8;
+const VISIBILITY_RANGE: i32 = 10;
 
 pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
     let mut dungeon = Dungeon::new(2);
@@ -57,7 +57,7 @@ pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
 
 pub fn update_tile_visibility(
     player_query: Query<&Position, With<Player>>,
-    mut tile_query: Query<(&mut Tile, &mut Sprite, &Position), Without<Player>>,
+    mut tile_query: Query<(&mut Tile, &Position), Without<Player>>,
     blocker_query: Query<&Position, With<VisionBlocker>>,
 ) {
     let Ok(player_position) = player_query.get_single() else {
@@ -66,7 +66,7 @@ pub fn update_tile_visibility(
 
     let blocker_positions: Vec<Vector2Int> = blocker_query.iter().map(|b| b.v).collect();
 
-    for (mut tile, mut sprite, position) in tile_query.iter_mut() {
+    for (mut tile, position) in tile_query.iter_mut() {
         let within_range = position.v.distance(player_position.v) <= VISIBILITY_RANGE;
         let mut los = false;
         if within_range {
@@ -76,17 +76,11 @@ pub fn update_tile_visibility(
             los = in_sight || first_blocker == Some(position.v);
         }
 
-        if (within_range && los) || tile.seen {
+        if within_range && los {
             tile.visible = true;
             tile.seen = true;
         } else {
             tile.visible = false;
-        }
-
-        if tile.seen && !within_range {
-            sprite.color = sprite.color.with_a(0.1);
-        } else {
-            sprite.color = sprite.color.with_a(1.0);
         }
     }
 }

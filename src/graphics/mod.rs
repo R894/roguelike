@@ -33,6 +33,7 @@ impl Plugin for GraphicsPlugin {
                     tiles::spawn_tile_renderer,
                     tiles::update_tile_visibility,
                     pieces::spawn_piece_renderer,
+                    tiles::update_tile_colors.after(tiles::update_tile_visibility),
                 ),
             );
     }
