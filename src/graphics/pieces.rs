@@ -25,6 +25,7 @@ pub fn spawn_piece_renderer(
         let sprite_idx = match piece.kind.as_str() {
             "Player" => 1,
             "Coin" => 9,
+            "Portal" => 0,
             _ => '?' as usize,
         };
         let sprite = Sprite {
@@ -72,13 +73,20 @@ pub fn path_animator_update(
             commands.entity(entity).remove::<PathAnimator>();
             continue;
         }
-        ev_wait.send(super::GraphicsWaitEvent);
+
         let target = *animator.path.front().unwrap();
+        if animator.instant {
+            transform.translation = target;
+            animator.path.clear();
+            continue;
+        }
+
         let d = (target - transform.translation).length();
+        ev_wait.send(super::GraphicsWaitEvent);
         if d > POSITION_TOLERANCE {
             transform.translation = transform.translation.lerp(
                 target,
-                animator.speed_modifier * PIECE_SPEED * time.delta_seconds(),
+                animator.speed_multiplier * PIECE_SPEED * time.delta_seconds(),
             );
         } else {
             // the entity is at the desired path position
@@ -88,20 +96,16 @@ pub fn path_animator_update(
     }
 }
 
-pub fn walk_animation(
-    mut commands: Commands,
-    mut ev_action: EventReader<ActionExecutedEvent>,
-    mut ev_wait: EventWriter<super::GraphicsWaitEvent>,
-) {
+pub fn walk_animation(mut commands: Commands, mut ev_action: EventReader<ActionExecutedEvent>) {
     for ev in ev_action.read() {
         let action = ev.0.as_any();
         if let Some(action) = action.downcast_ref::<WalkAction>() {
             let target = super::get_world_vec(action.1, PIECE_Z);
             commands.entity(action.0).insert(PathAnimator {
                 path: VecDeque::from([target]),
-                speed_modifier: 1.0,
+                instant: true,
+                ..default()
             });
-            ev_wait.send(super::GraphicsWaitEvent);
         }
     }
 }
@@ -122,7 +126,8 @@ pub fn melee_animation(
             let target = base + 0.25 * (super::get_world_vec(action.target, PIECE_Z) - base);
             commands.entity(action.attacker).insert(PathAnimator {
                 path: VecDeque::from([target, base]),
-                speed_modifier: 2.0,
+                speed_multiplier: 5.0,
+                ..default()
             });
             ev_wait.send(super::GraphicsWaitEvent);
         }

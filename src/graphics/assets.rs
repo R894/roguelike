@@ -11,5 +11,16 @@ pub struct Ascii {
 #[derive(Component)]
 pub struct PathAnimator {
     pub path: VecDeque<Vec3>,
-    pub speed_modifier: f32,
+    pub speed_multiplier: f32,
+    pub instant: bool,
+}
+
+impl Default for PathAnimator {
+    fn default() -> Self {
+        Self {
+            path: VecDeque::new(),
+            speed_multiplier: 1.,
+            instant: false,
+        }
+    }
 }
