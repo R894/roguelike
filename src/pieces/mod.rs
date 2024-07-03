@@ -20,7 +20,10 @@ impl Plugin for PiecesPlugin {
 pub fn spawn_npcs(mut commands: Commands, valid_spots: Res<ValidSpots>) {
     for _ in 0..10 {
         spawn_coin(&mut commands, &valid_spots);
+        // spawn_test_npc(&mut commands, &valid_spots);
     }
+
+    spawn_portal(&mut commands, &valid_spots);
 }
 
 fn spawn_test_npc(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
@@ -47,6 +50,19 @@ fn spawn_coin(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
         components::Piece {
             kind: "Coin".to_string(),
         },
+        Position {
+            v: valid_spots.0[rand],
+        },
+    ));
+}
+
+fn spawn_portal(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
+    let rand = rand::thread_rng().gen_range(0..valid_spots.0.len());
+    commands.spawn((
+        components::Piece {
+            kind: "Portal".to_string(),
+        },
+        components::Portal,
         Position {
             v: valid_spots.0[rand],
         },
