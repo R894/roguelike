@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::vectors::Vector2Int;
 use bevy::prelude::*;
