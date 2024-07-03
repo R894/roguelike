@@ -68,25 +68,3 @@ pub fn spawn_tile_renderer(
         commands.entity(entity).insert(bundle);
     }
 }
-
-pub fn update_tile_visibility(mut query: Query<(&mut Visibility, &Tile), Changed<Tile>>) {
-    for (mut visibility, tile) in query.iter_mut() {
-        if tile.visible || tile.seen {
-            *visibility = Visibility::Visible;
-        } else {
-            *visibility = Visibility::Hidden;
-        }
-    }
-}
-
-pub fn update_tile_colors(mut query: Query<(&mut Sprite, &Tile), Changed<Tile>>) {
-    for (mut sprite, tile) in query.iter_mut() {
-        let mut color = sprite.color;
-        if tile.visible {
-            color.set_a(1.0);
-        } else if tile.seen {
-            color.set_a(0.3);
-        }
-        sprite.color = color;
-    }
-}

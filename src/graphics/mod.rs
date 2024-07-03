@@ -5,13 +5,14 @@ use crate::{board::components::Position, states::TurnSet, vectors::Vector2Int};
 pub mod assets;
 mod pieces;
 pub mod tiles;
+mod visibility;
 
 pub struct GraphicsPlugin;
 
 pub const TILE_SIZE: f32 = 32.;
 pub const TILE_Z: f32 = 1.;
 pub const PIECE_Z: f32 = 10.;
-pub const PIECE_SPEED: f32 = 30.;
+pub const PIECE_SPEED: f32 = 10.;
 pub const POSITION_TOLERANCE: f32 = 0.1;
 
 impl Plugin for GraphicsPlugin {
@@ -31,9 +32,9 @@ impl Plugin for GraphicsPlugin {
                 Update,
                 (
                     tiles::spawn_tile_renderer,
-                    tiles::update_tile_visibility,
+                    visibility::update_visibility,
                     pieces::spawn_piece_renderer,
-                    tiles::update_tile_colors.after(tiles::update_tile_visibility),
+                    visibility::update_tile_colors.after(visibility::update_visibility),
                 ),
             );
     }
