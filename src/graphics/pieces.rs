@@ -23,9 +23,9 @@ pub fn spawn_piece_renderer(
 ) {
     for (entity, position, piece) in query.iter() {
         let sprite_idx = match piece.kind.as_str() {
-            "Player" => 1,
-            "Coin" => 9,
-            "Portal" => 0,
+            "Player" => 25,
+            "Coin" => 218,
+            "Portal" => 297,
             _ => '?' as usize,
         };
         let sprite = Sprite {

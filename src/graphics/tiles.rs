@@ -4,15 +4,14 @@ use crate::board::components::{Position, Tile, Wall};
 
 use super::{assets::Ascii, TILE_SIZE, TILE_Z};
 
-const ATLAS_PATH: &str = "textures/Ascii.png";
+const ATLAS_PATH: &str = "textures/colored-transparent_packed.png";
 
 pub fn setup(
     mut commands: Commands,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
 ) {
-    let layout =
-        TextureAtlasLayout::from_grid(Vec2::splat(9.0), 16, 16, Some(Vec2::splat(2.0)), None);
+    let layout = TextureAtlasLayout::from_grid(Vec2::splat(16.0), 49, 22, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
     let texture = asset_server.load(ATLAS_PATH);
@@ -42,7 +41,7 @@ pub fn spawn_tile_renderer(
             texture: assets.image.clone(),
             transform: Transform::from_translation(Vec3::new(v.x, v.y, v.z)),
             atlas: TextureAtlas {
-                index: '.' as usize,
+                index: 1,
                 layout: assets.texture.clone(),
             },
             ..Default::default()
@@ -60,7 +59,7 @@ pub fn spawn_tile_renderer(
             texture: assets.image.clone(),
             transform: Transform::from_xyz(0., 0., 1.),
             atlas: TextureAtlas {
-                index: '#' as usize,
+                index: 49,
                 layout: assets.texture.clone(),
             },
             ..Default::default()
