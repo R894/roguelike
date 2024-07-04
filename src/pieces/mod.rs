@@ -1,19 +1,23 @@
 use bevy::prelude::*;
 use components::Piece;
+use equipment::systems::update_piece_stats;
 use rand::Rng;
 
 use crate::{
     board::{components::Position, systems::spawn_map, ValidSpots},
+    player::{despawn_player, Player},
     states::MainState,
 };
 pub mod components;
+pub mod equipment;
 
 pub struct PiecesPlugin;
 
 impl Plugin for PiecesPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(MainState::Game), spawn_npcs.after(spawn_map))
-            .add_systems(OnExit(MainState::Game), despawn_pieces);
+            .add_systems(OnExit(MainState::Game), (despawn_pieces, despawn_player))
+            .add_systems(Update, update_piece_stats.run_if(in_state(MainState::Game)));
     }
 }
 
@@ -21,9 +25,8 @@ pub fn spawn_npcs(mut commands: Commands, valid_spots: Res<ValidSpots>) {
     for _ in 0..10 {
         spawn_coin(&mut commands, &valid_spots);
         // spawn_test_npc(&mut commands, &valid_spots);
+        spawn_portal(&mut commands, &valid_spots);
     }
-
-    spawn_portal(&mut commands, &valid_spots);
 }
 
 fn spawn_test_npc(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
@@ -69,7 +72,10 @@ fn spawn_portal(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
     ));
 }
 
-fn despawn_pieces(mut commands: Commands, query: Query<Entity, With<Piece>>) {
+pub fn despawn_pieces(
+    mut commands: Commands,
+    query: Query<Entity, (With<Piece>, Without<Player>)>,
+) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
