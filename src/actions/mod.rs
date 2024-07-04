@@ -18,6 +18,7 @@ impl Plugin for ActionsPlugin {
             .add_event::<ActionExecutedEvent>()
             .add_event::<InvalidPlayerActionEvent>()
             .add_event::<GameOverEvent>()
+            .add_event::<NextLevelEvent>()
             .configure_sets(
                 Update,
                 (ActionSet::Planning, ActionSet::Late).in_set(TurnSet::Logic),
@@ -69,6 +70,9 @@ pub struct ActionExecutedEvent(pub Box<dyn Action>);
 
 #[derive(Event)]
 pub struct GameOverEvent;
+
+#[derive(Event)]
+pub struct NextLevelEvent;
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 enum ActionSet {

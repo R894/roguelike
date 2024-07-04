@@ -121,8 +121,14 @@ fn line_of_sight(
     (None, true)
 }
 
-pub fn despawn_map(mut commands: Commands, tile_query: Query<Entity, With<Tile>>) {
+pub fn despawn_map(
+    mut commands: Commands,
+    tile_query: Query<Entity, With<Tile>>,
+    mut valid_spots: ResMut<ValidSpots>,
+) {
     for entity in tile_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
+
+    valid_spots.0.clear();
 }

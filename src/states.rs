@@ -22,3 +22,6 @@ pub enum TurnSet {
     Animation,
     Tick,
 }
+
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub struct LevelSetupSet;

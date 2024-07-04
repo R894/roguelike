@@ -2,11 +2,11 @@ use bevy::prelude::*;
 
 use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Gold, Health, Occupier, Piece};
+use crate::pieces::components::{Gold, Health, Occupier, Piece, Portal};
 use crate::player::Player;
 use crate::vectors::Vector2Int;
 
-use super::{Action, GameOverEvent};
+use super::{Action, GameOverEvent, NextLevelEvent};
 
 pub struct DamageAction(pub Entity, pub u32);
 impl Action for DamageAction {
@@ -102,7 +102,8 @@ impl Action for WalkAction {
         position.v = self.1;
 
         let pickup_action = Box::new(PickupAction(self.0, position.v));
-        Ok(vec![pickup_action])
+        let next_level_action = Box::new(NextLevelAction(self.0, position.v));
+        Ok(vec![pickup_action, next_level_action])
     }
     fn as_any(&self) -> &dyn std::any::Any {
         self
@@ -152,7 +153,28 @@ impl Action for PickupAction {
         let mut player_gold = world.get_mut::<Gold>(self.0).ok_or(())?;
         player_gold.value += target_gold[0].1;
         despawn_recursive(world, target_gold[0].0);
-        println!("picked up {} gold", target_gold[0].1);
+        Ok(Vec::new())
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub struct NextLevelAction(pub Entity, pub Vector2Int);
+impl Action for NextLevelAction {
+    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        let target_portal = world
+            .query_filtered::<(Entity, &Position), With<Portal>>()
+            .iter(world)
+            .filter(|(_, p)| p.v == self.1)
+            .map(|(e, _)| e)
+            .collect::<Vec<_>>();
+
+        if target_portal.is_empty() {
+            return Err(());
+        }
+
+        world.send_event(NextLevelEvent);
         Ok(Vec::new())
     }
     fn as_any(&self) -> &dyn std::any::Any {
