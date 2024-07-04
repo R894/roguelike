@@ -36,6 +36,3 @@ pub struct ItemPicker;
 
 #[derive(Component)]
 pub struct Portal;
-
-#[derive(Component)]
-pub struct Item;
