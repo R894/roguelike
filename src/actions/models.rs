@@ -101,9 +101,11 @@ impl Action for WalkAction {
         let mut position = world.get_mut::<Position>(self.0).ok_or(())?;
         position.v = self.1;
 
-        let pickup_action = Box::new(PickupAction(self.0, position.v));
-        let next_level_action = Box::new(NextLevelAction(self.0, position.v));
-        Ok(vec![pickup_action, next_level_action])
+        let mut actions: Vec<Box<dyn Action>> = vec![Box::new(PickupAction(self.0, position.v))];
+        if world.get::<Player>(self.0).is_some() {
+            actions.push(Box::new(NextLevelAction(self.0, self.1)));
+        }
+        Ok(actions)
     }
     fn as_any(&self) -> &dyn std::any::Any {
         self
