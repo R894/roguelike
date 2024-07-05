@@ -24,9 +24,9 @@ impl Plugin for PiecesPlugin {
 pub fn spawn_npcs(mut commands: Commands, valid_spots: Res<ValidSpots>) {
     for _ in 0..10 {
         spawn_coin(&mut commands, &valid_spots);
-        // spawn_test_npc(&mut commands, &valid_spots);
-        spawn_portal(&mut commands, &valid_spots);
+        spawn_test_npc(&mut commands, &valid_spots);
     }
+    spawn_portal(&mut commands, &valid_spots);
 }
 
 fn spawn_test_npc(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
