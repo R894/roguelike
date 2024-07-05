@@ -26,7 +26,7 @@ pub fn spawn_piece_renderer(
             "Player" => 25,
             "Coin" => 218,
             "Portal" => 297,
-            _ => '?' as usize,
+            _ => 269,
         };
         let sprite = Sprite {
             custom_size: Some(Vec2::splat(TILE_SIZE)),
