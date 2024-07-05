@@ -5,7 +5,7 @@ use crate::{
     graphics::TILE_SIZE,
     pieces::{
         components::{Actor, Gold, Health, ItemPicker, Melee, Occupier, Piece},
-        equipment::{Armor, Equipment, Weapon},
+        equipment::Equipment,
     },
     states::MainState,
 };
@@ -27,10 +27,7 @@ pub fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
         Player,
         Occupier,
         ItemPicker,
-        Equipment {
-            armor: Some(Armor { armor: 5 }),
-            weapon: Some(Weapon { damage: 5 }),
-        },
+        Equipment { ..default() },
         Health { value: 10 },
         Melee { damage: 5 },
         Piece {

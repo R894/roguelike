@@ -2,18 +2,20 @@ pub mod systems;
 
 use bevy::prelude::*;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Equipment {
-    pub armor: Option<Armor>,
-    pub weapon: Option<Weapon>,
+    pub weapon: Option<Item>,
+    pub chest: Option<Item>,
 }
 
-#[derive(Component)]
-pub struct Armor {
-    pub armor: u32,
+#[derive(Component, Default)]
+pub struct Item {
+    pub damage: Option<Damage>,
+    pub health: Option<u32>,
+    pub defense: Option<u32>,
 }
 
-#[derive(Component)]
-pub struct Weapon {
-    pub damage: u32,
+pub struct Damage {
+    pub min: u32,
+    pub max: u32,
 }
