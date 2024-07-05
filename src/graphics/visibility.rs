@@ -29,8 +29,11 @@ pub fn update_visibility(
     }
 }
 
-pub fn update_tile_colors(mut query: Query<(&mut Sprite, &Tile), Changed<Tile>>) {
-    for (mut sprite, tile) in query.iter_mut() {
+pub fn update_tile_colors(
+    mut query: Query<(&mut Sprite, Option<&Children>, &Tile), Changed<Tile>>,
+    mut sprite_query: Query<&mut Sprite, Without<Tile>>,
+) {
+    for (mut sprite, children, tile) in query.iter_mut() {
         let mut color = sprite.color;
         if tile.visible {
             color.set_a(1.0);
@@ -38,5 +41,21 @@ pub fn update_tile_colors(mut query: Query<(&mut Sprite, &Tile), Changed<Tile>>)
             color.set_a(0.1);
         }
         sprite.color = color;
+
+        if let Some(children) = children {
+            update_children_colors(&mut sprite_query, children, color);
+        }
+    }
+}
+
+fn update_children_colors(
+    query: &mut Query<&mut Sprite, Without<Tile>>,
+    children: &Children,
+    color: Color,
+) {
+    for child in children.iter() {
+        if let Ok(mut sprite) = query.get_mut(*child) {
+            sprite.color = color;
+        }
     }
 }
