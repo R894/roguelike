@@ -1,4 +1,7 @@
+mod inventory;
+
 use bevy::prelude::*;
+use inventory::Inventory;
 
 use crate::{
     board::{components::Position, systems::spawn_map, ValidSpots},
@@ -28,8 +31,14 @@ pub fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
         Occupier,
         ItemPicker,
         Equipment { ..default() },
-        Health { value: 10 },
+        Health {
+            max: 10,
+            current: 10,
+        },
         Melee { damage: 5 },
+        Inventory {
+            ..Default::default()
+        },
         Piece {
             kind: "Player".to_string(),
         },

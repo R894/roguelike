@@ -7,11 +7,17 @@ pub struct Actor(pub Vec<(Box<dyn Action>, i32)>);
 
 #[derive(Component)]
 pub struct Health {
-    pub value: u32,
+    pub current: u32,
+    pub max: u32,
 }
 
 #[derive(Component)]
 pub struct Gold {
+    pub value: u32,
+}
+
+#[derive(Component)]
+pub struct HealthDrop {
     pub value: u32,
 }
 

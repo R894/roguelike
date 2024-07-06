@@ -60,9 +60,11 @@ pub fn update_ui_health(
     mut text_query: Query<&mut Text, With<UiHealth>>,
     health_query: Query<&Health, With<Player>>,
 ) {
-    let health = health_query.get_single().unwrap_or(&Health { value: 0 });
+    let health = health_query
+        .get_single()
+        .unwrap_or(&Health { current: 0, max: 0 });
     for mut text in &mut text_query {
-        text.sections[0].value = format!("Health: {}", health.value);
+        text.sections[0].value = format!("Health: {}", health.current);
     }
 }
 

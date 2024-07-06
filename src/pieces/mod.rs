@@ -25,6 +25,7 @@ pub fn spawn_npcs(mut commands: Commands, valid_spots: Res<ValidSpots>) {
     for _ in 0..10 {
         spawn_coin(&mut commands, &valid_spots);
         spawn_test_npc(&mut commands, &valid_spots);
+        spawn_health_drop(&mut commands, &valid_spots)
     }
     spawn_portal(&mut commands, &valid_spots);
 }
@@ -33,7 +34,10 @@ fn spawn_test_npc(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
     let rand = rand::thread_rng().gen_range(0..valid_spots.0.len());
     commands.spawn((
         components::Actor::default(),
-        components::Health { value: 10 },
+        components::Health {
+            max: 10,
+            current: 10,
+        },
         components::Piece {
             kind: "NPC".to_string(),
         },
@@ -52,6 +56,19 @@ fn spawn_coin(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
         components::Gold { value: 1 },
         components::Piece {
             kind: "Coin".to_string(),
+        },
+        Position {
+            v: valid_spots.0[rand],
+        },
+    ));
+}
+
+fn spawn_health_drop(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
+    let rand = rand::thread_rng().gen_range(0..valid_spots.0.len());
+    commands.spawn((
+        components::HealthDrop { value: 5 },
+        components::Piece {
+            kind: "Health".to_string(),
         },
         Position {
             v: valid_spots.0[rand],

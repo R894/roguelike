@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Gold, Health, Occupier, Piece, Portal};
+use crate::pieces::components::{Gold, Health, HealthDrop, Occupier, Piece, Portal};
 use crate::player::Player;
 use crate::vectors::Vector2Int;
 
@@ -14,8 +14,8 @@ impl Action for DamageAction {
         let Some(mut health) = world.get_mut::<Health>(self.0) else {
             return Err(());
         };
-        health.value = health.value.saturating_sub(self.1);
-        if health.value == 0 {
+        health.current = health.current.saturating_sub(self.1);
+        if health.current == 0 {
             // the unit is killed
             // if its a player send the gameover event
             if world.get::<Player>(self.0).is_some() {
@@ -149,13 +149,32 @@ impl Action for PickupAction {
             .map(|(e, g, _)| (e, g.value))
             .collect::<Vec<_>>();
 
-        if target_gold.is_empty() {
-            return Err(());
+        if !target_gold.is_empty() {
+            let mut player_gold = world.get_mut::<Gold>(self.0).ok_or(())?;
+            player_gold.value += target_gold[0].1;
+            despawn_recursive(world, target_gold[0].0);
+            return Ok(Vec::new());
         }
-        let mut player_gold = world.get_mut::<Gold>(self.0).ok_or(())?;
-        player_gold.value += target_gold[0].1;
-        despawn_recursive(world, target_gold[0].0);
-        Ok(Vec::new())
+
+        let target_health = world
+            .query_filtered::<(Entity, &HealthDrop, &Position), (With<Piece>, Without<Player>)>()
+            .iter(world)
+            .filter(|(_, _, p)| p.v == self.1)
+            .map(|(e, h, _)| (e, h.value))
+            .collect::<Vec<_>>();
+        if !target_health.is_empty() {
+            let mut player_health = world.get_mut::<Health>(self.0).ok_or(())?;
+            let updated_health = player_health.current + target_health[0].1;
+            if updated_health > player_health.max {
+                player_health.current = player_health.max;
+            } else {
+                player_health.current = updated_health;
+            }
+            despawn_recursive(world, target_health[0].0);
+            return Ok(Vec::new());
+        }
+
+        Err(())
     }
     fn as_any(&self) -> &dyn std::any::Any {
         self

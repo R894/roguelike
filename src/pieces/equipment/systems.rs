@@ -19,7 +19,7 @@ pub fn update_piece_stats(
 
         if let Some(armor) = &equipment.chest {
             if let Some(health) = armor.health {
-                piece_health.value += health;
+                piece_health.max += health;
             }
         }
     }
