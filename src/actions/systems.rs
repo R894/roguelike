@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use rand::prelude::*;
 
+use crate::board::systems::VISIBILITY_RANGE;
 use crate::board::CurrentBoard;
 use crate::pieces::components::{Melee, Occupier, Walk};
 use crate::player::Player;
@@ -97,6 +98,9 @@ pub fn plan_walk(
     let Ok(player_position) = player_query.get_single() else {
         return;
     };
+    if position.v.distance(player_position.v) > VISIBILITY_RANGE {
+        return;
+    }
     // get all possible move targets
     let positions = ORTHO_DIRECTIONS
         .iter()
