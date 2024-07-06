@@ -8,7 +8,7 @@ use super::{CurrentBoard, ValidSpots};
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-const VISIBILITY_RANGE: i32 = 10;
+pub const VISIBILITY_RANGE: i32 = 10;
 
 pub fn spawn_map(mut commands: Commands, mut current: ResMut<CurrentBoard>) {
     let mut dungeon = Dungeon::new(2);
