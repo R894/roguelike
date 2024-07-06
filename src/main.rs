@@ -22,6 +22,7 @@ fn main() {
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
+                        title: "Roguelike".to_string(),
                         resolution: (globals::WINDOW_WIDTH, globals::WINDOW_HEIGHT).into(),
                         ..Default::default()
                     }),
