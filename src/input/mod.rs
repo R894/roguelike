@@ -40,9 +40,9 @@ const DIR_KEY_MAPPING: [(KeyCode, Vector2Int); 4] = [
     (KeyCode::KeyD, Vector2Int::RIGHT),
 ];
 
-const UP_INDEX: usize = '^' as usize;
-const LEFT_INDEX: usize = '<' as usize;
-const RIGHT_INDEX: usize = '>' as usize;
+const UP_INDEX: usize = 1052;
+const LEFT_INDEX: usize = 1055;
+const RIGHT_INDEX: usize = 1053;
 
 #[derive(Clone, Debug, Default, Hash, Eq, States, PartialEq)]
 pub enum ActionDirectionSelectionState {
