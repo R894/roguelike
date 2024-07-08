@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Gold, Health, HealthDrop, Occupier, Piece, Portal};
+use crate::pieces::components::{Health, ItemContainer, Occupier, Portal};
 use crate::player::Player;
 use crate::vectors::Vector2Int;
 
@@ -142,39 +142,19 @@ impl Action for DigAction {
 pub struct PickupAction(pub Entity, pub Vector2Int);
 impl Action for PickupAction {
     fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
-        let target_gold = world
-            .query_filtered::<(Entity, &Gold, &Position), (With<Piece>, Without<Player>)>()
+        let target_item_entity = world
+            .query_filtered::<(Entity, &ItemContainer, &Position), (With<ItemContainer>, Without<Player>)>()
             .iter(world)
-            .filter(|(_, _, p)| p.v == self.1)
-            .map(|(e, g, _)| (e, g.value))
-            .collect::<Vec<_>>();
+            .find(|(_, _, p)| p.v == self.1)
+            .map(|(e, item_container, _)| (e, item_container));
 
-        if !target_gold.is_empty() {
-            let mut player_gold = world.get_mut::<Gold>(self.0).ok_or(())?;
-            player_gold.value += target_gold[0].1;
-            despawn_recursive(world, target_gold[0].0);
-            return Ok(Vec::new());
+        if target_item_entity.is_none() {
+            return Err(());
         }
-
-        let target_health = world
-            .query_filtered::<(Entity, &HealthDrop, &Position), (With<Piece>, Without<Player>)>()
-            .iter(world)
-            .filter(|(_, _, p)| p.v == self.1)
-            .map(|(e, h, _)| (e, h.value))
-            .collect::<Vec<_>>();
-        if !target_health.is_empty() {
-            let mut player_health = world.get_mut::<Health>(self.0).ok_or(())?;
-            let updated_health = player_health.current + target_health[0].1;
-            if updated_health > player_health.max {
-                player_health.current = player_health.max;
-            } else {
-                player_health.current = updated_health;
-            }
-            despawn_recursive(world, target_health[0].0);
-            return Ok(Vec::new());
-        }
-
-        Err(())
+        // unwrap is safe here
+        let target_item = target_item_entity.unwrap().1.item.clone();
+        let _ = target_item.pick_up(world, self.0, target_item_entity.unwrap().0);
+        Ok(Vec::new())
     }
     fn as_any(&self) -> &dyn std::any::Any {
         self

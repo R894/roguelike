@@ -53,7 +53,9 @@ fn spawn_test_npc(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
 fn spawn_coin(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
     let rand = rand::thread_rng().gen_range(0..valid_spots.0.len());
     commands.spawn((
-        components::Gold { value: 1 },
+        components::ItemContainer {
+            item: Box::new(components::GoldDrop { value: 1 }),
+        },
         components::Piece {
             kind: "Coin".to_string(),
         },
@@ -66,7 +68,9 @@ fn spawn_coin(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
 fn spawn_health_drop(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
     let rand = rand::thread_rng().gen_range(0..valid_spots.0.len());
     commands.spawn((
-        components::HealthDrop { value: 5 },
+        components::ItemContainer {
+            item: Box::new(components::HealthDrop { value: 5 }),
+        },
         components::Piece {
             kind: "Health".to_string(),
         },
