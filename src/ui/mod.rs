@@ -131,7 +131,6 @@ fn button_system(
         (Changed<Interaction>, With<Button>),
     >,
     mut text_query: Query<&mut Text>,
-    mut state: ResMut<NextState<MainState>>,
 ) {
     for (interaction, mut bg, children, colors) in &mut interaction_query {
         let mut text = text_query.get_mut(children[0]).unwrap();
@@ -141,7 +140,6 @@ fn button_system(
                     *bg = bg_colors.pressed.into();
                 }
                 text.sections[0].style.color = colors.text.pressed;
-                state.set(MainState::Game);
             }
             Interaction::Hovered => {
                 if let Some(bg_colors) = &colors.background {

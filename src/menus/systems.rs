@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::ui::{spawn_button, BorderTexture, UiFont};
+use crate::{
+    states::MainState,
+    ui::{spawn_button, BorderTexture, TextBox, UiFont},
+};
 
 use super::Menu;
 
@@ -25,7 +28,6 @@ pub fn main_menu(mut commands: Commands, border_texture: Res<BorderTexture>, fon
         },
         ..default()
     };
-
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -103,5 +105,20 @@ pub fn game_over_menu(
 pub fn despawn_menu(mut commands: Commands, query: Query<Entity, With<Menu>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
+    }
+}
+
+pub fn menu_button_system(
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<TextBox>)>,
+    mut state: ResMut<NextState<MainState>>,
+) {
+    for interaction in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                state.set(MainState::Game);
+            }
+            Interaction::Hovered => {}
+            Interaction::None => {}
+        }
     }
 }

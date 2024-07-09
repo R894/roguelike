@@ -1,5 +1,5 @@
 mod inventory;
-mod systems;
+pub mod systems;
 
 use bevy::prelude::*;
 use inventory::InventoryState;
@@ -31,6 +31,7 @@ impl Plugin for MenuPlugin {
                 OnExit(InventoryState::Open),
                 inventory::despawn_inventory_menu,
             )
+            .add_systems(Update, systems::menu_button_system)
             .add_systems(OnExit(MainState::Menu), systems::despawn_menu)
             .add_systems(OnEnter(MainState::GameOver), systems::game_over_menu)
             .add_systems(OnExit(MainState::GameOver), systems::despawn_menu);
