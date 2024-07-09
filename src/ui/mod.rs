@@ -4,13 +4,35 @@ use bevy::prelude::*;
 
 use crate::states::MainState;
 
-pub const NORMAL_BUTTON: Color = Color::rgb(0.8, 0.8, 0.8);
-pub const HOVERED_BUTTON: Color = Color::rgb(0.9, 0.9, 0.9);
-pub const PRESSED_BUTTON: Color = Color::rgb(0.6, 0.6, 0.6);
+pub const NORMAL_BUTTON: Color = Color::srgb(0.8, 0.8, 0.8);
+pub const HOVERED_BUTTON: Color = Color::srgb(0.9, 0.9, 0.9);
+pub const PRESSED_BUTTON: Color = Color::srgb(0.6, 0.6, 0.6);
 
 #[derive(Component)]
 pub struct TextBox;
 
+#[derive(Component, Default)]
+pub struct OriginalColors {
+    pub text: ButtonColorOptions,
+    pub background: Option<ButtonColorOptions>,
+}
+
+#[derive(Clone)]
+pub struct ButtonColorOptions {
+    pub normal: Color,
+    pub hovered: Color,
+    pub pressed: Color,
+}
+
+impl Default for ButtonColorOptions {
+    fn default() -> Self {
+        Self {
+            normal: NORMAL_BUTTON,
+            hovered: HOVERED_BUTTON,
+            pressed: PRESSED_BUTTON,
+        }
+    }
+}
 pub struct UiPlugin;
 
 #[derive(Resource)]
@@ -28,8 +50,7 @@ pub struct UiGold;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, setup)
-            .add_systems(Update, button_system.run_if(in_state(MainState::Menu)))
-            .add_systems(Update, button_system.run_if(in_state(MainState::GameOver)))
+            .add_systems(Update, button_system)
             .add_systems(OnEnter(MainState::Game), systems::spawn_ui)
             .add_systems(
                 Update,
@@ -74,11 +95,11 @@ pub fn spawn_button(
                     ..default()
                 },
                 image: image.clone().into(),
-                background_color: Color::YELLOW.into(),
                 ..default()
             },
             ImageScaleMode::Sliced(slicer.clone()),
         ))
+        .insert(OriginalColors { ..default() })
         .insert(TextBox)
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
@@ -86,7 +107,7 @@ pub fn spawn_button(
                 TextStyle {
                     font: font.0.clone(),
                     font_size: 40.0,
-                    color: Color::rgb(0.7, 0.7, 0.7),
+                    color: Color::srgb(0.7, 0.7, 0.7),
                 },
             ));
         })
@@ -101,27 +122,38 @@ pub fn spawn_button(
 #[allow(clippy::type_complexity)]
 fn button_system(
     mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &Children),
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &Children,
+            &OriginalColors,
+        ),
         (Changed<Interaction>, With<Button>),
     >,
     mut text_query: Query<&mut Text>,
     mut state: ResMut<NextState<MainState>>,
 ) {
-    for (interaction, mut bg, children) in &mut interaction_query {
+    for (interaction, mut bg, children, colors) in &mut interaction_query {
         let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Pressed => {
-                *bg = PRESSED_BUTTON.into();
-                text.sections[0].style.color = PRESSED_BUTTON;
+                if let Some(bg_colors) = &colors.background {
+                    *bg = bg_colors.pressed.into();
+                }
+                text.sections[0].style.color = colors.text.pressed;
                 state.set(MainState::Game);
             }
             Interaction::Hovered => {
-                *bg = HOVERED_BUTTON.into();
-                text.sections[0].style.color = HOVERED_BUTTON;
+                if let Some(bg_colors) = &colors.background {
+                    *bg = bg_colors.hovered.into();
+                }
+                text.sections[0].style.color = colors.text.hovered;
             }
             Interaction::None => {
-                *bg = NORMAL_BUTTON.into();
-                text.sections[0].style.color = NORMAL_BUTTON;
+                if let Some(bg_colors) = &colors.background {
+                    *bg = bg_colors.normal.into();
+                }
+                text.sections[0].style.color = colors.text.normal;
             }
         }
     }
