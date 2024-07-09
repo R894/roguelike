@@ -13,13 +13,13 @@ pub fn update_piece_stats(
 ) {
     for (equipment, mut melee, mut piece_health) in piece_query.iter_mut() {
         if let Some(weapon) = &equipment.weapon {
-            if let Some(damage) = &weapon.damage {
+            if let Some(damage) = &weapon.damage() {
                 melee.damage += damage.max;
             }
         }
 
         if let Some(armor) = &equipment.chest {
-            if let Some(health) = armor.health {
+            if let Some(health) = armor.health() {
                 piece_health.max += health;
             }
         }

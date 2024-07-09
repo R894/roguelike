@@ -2,17 +2,27 @@ pub mod systems;
 
 use bevy::prelude::*;
 
-#[derive(Component, Default)]
-pub struct Equipment {
-    pub weapon: Option<Equippable>,
-    pub chest: Option<Equippable>,
-}
+use crate::{actions::models::despawn_recursive, player::inventory::Inventory};
+
+use super::components::ItemContainer;
 
 #[derive(Component, Default)]
-pub struct Equippable {
-    pub damage: Option<Damage>,
-    pub health: Option<u32>,
-    pub defense: Option<u32>,
+pub struct Equipment {
+    pub weapon: Option<Box<dyn Equippable>>,
+    pub chest: Option<Box<dyn Equippable>>,
+}
+
+pub trait Equippable: Send + Sync {
+    fn damage(&self) -> Option<Damage>;
+    fn health(&self) -> Option<u32>;
+    fn defense(&self) -> Option<u32>;
+    fn clone_box(&self) -> Box<dyn Equippable>;
+}
+
+impl Clone for Box<dyn Equippable> {
+    fn clone(&self) -> Self {
+        self.as_ref().clone_box()
+    }
 }
 
 pub trait Item: Send + Sync {
@@ -35,4 +45,51 @@ impl Clone for Box<dyn Item> {
 pub struct Damage {
     pub min: u32,
     pub max: u32,
+}
+
+#[derive(Component, Clone)]
+pub struct Sword;
+
+impl Equippable for Sword {
+    fn damage(&self) -> Option<Damage> {
+        Some(Damage { min: 5, max: 10 })
+    }
+    fn health(&self) -> Option<u32> {
+        None
+    }
+    fn defense(&self) -> Option<u32> {
+        None
+    }
+
+    fn clone_box(&self) -> Box<dyn Equippable> {
+        Box::new(self.clone())
+    }
+}
+
+impl Item for Sword {
+    fn pick_up(
+        &self,
+        world: &mut World,
+        player_entity: Entity,
+        item_entity: Entity,
+    ) -> Result<(), ()> {
+        let item = {
+            let item_container_ref = world.get::<ItemContainer>(item_entity).ok_or(())?;
+            item_container_ref.item.clone()
+        };
+
+        let mut inventory = world.get_mut::<Inventory>(player_entity).ok_or(())?;
+        inventory.items.push(item);
+
+        despawn_recursive(world, item_entity);
+        Ok(())
+    }
+
+    fn name(&self) -> String {
+        "Sword".to_string()
+    }
+
+    fn clone_box(&self) -> Box<dyn Item> {
+        Box::new(self.clone())
+    }
 }
