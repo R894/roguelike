@@ -40,6 +40,9 @@ impl Item for GoldDrop {
         despawn_recursive(world, item_entity);
         Ok(())
     }
+    fn name(&self) -> String {
+        "Gold".to_string()
+    }
 
     fn clone_box(&self) -> Box<dyn Item> {
         Box::new(self.clone())
@@ -62,6 +65,10 @@ impl Item for HealthDrop {
         player_health.current = player_health.max.min(player_health.current + self.value);
         despawn_recursive(world, item_entity);
         Ok(())
+    }
+
+    fn name(&self) -> String {
+        "Health".to_string()
     }
 
     fn clone_box(&self) -> Box<dyn Item> {

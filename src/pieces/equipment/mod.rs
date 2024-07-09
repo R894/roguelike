@@ -22,6 +22,7 @@ pub trait Item: Send + Sync {
         player_entity: Entity,
         item_entity: Entity,
     ) -> Result<(), ()>;
+    fn name(&self) -> String;
     fn clone_box(&self) -> Box<dyn Item>;
 }
 
