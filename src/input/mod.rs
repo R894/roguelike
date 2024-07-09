@@ -133,7 +133,7 @@ pub fn display_action_arrows(
 
 pub fn spawn_arrows(commands: &mut Commands, entity: Entity, assets: Res<Ascii>) {
     let base_sprite = Sprite {
-        color: Color::rgba(1., 1., 1., 0.5),
+        color: Color::srgba(1., 1., 1., 0.5),
         custom_size: Some(Vec2::splat(TILE_SIZE)),
         ..default()
     };
