@@ -7,8 +7,8 @@ use crate::{
     board::{components::Position, systems::spawn_map, ValidSpots},
     graphics::TILE_SIZE,
     pieces::{
-        components::{Actor, Gold, GoldDrop, Health, ItemPicker, Melee, Occupier, Piece},
-        equipment::Equipment,
+        components::{Actor, Gold, Health, ItemPicker, Melee, Occupier, Piece},
+        equipment::{Equipment, Sword},
     },
     states::MainState,
 };
@@ -37,7 +37,7 @@ pub fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
         },
         Melee { damage: 5 },
         Inventory {
-            items: vec![Box::new(GoldDrop { value: 15 })],
+            items: vec![Box::new(Sword)],
         },
         Piece {
             kind: "Player".to_string(),
