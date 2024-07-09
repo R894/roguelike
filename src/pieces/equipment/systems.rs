@@ -4,6 +4,7 @@ use crate::pieces::components::{Health, Melee, Piece};
 
 use super::Equipment;
 
+#[allow(clippy::type_complexity)]
 pub fn update_piece_stats(
     mut piece_query: Query<
         (&mut Equipment, &mut Melee, &mut Health),
