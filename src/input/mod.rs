@@ -184,15 +184,15 @@ fn spawn_arrow(
     index: usize,
 ) -> Entity {
     commands
-        .spawn(SpriteSheetBundle {
+        .spawn(SpriteBundle {
             sprite,
             texture: assets.image.clone(),
             transform: Transform::from_translation(position),
-            atlas: TextureAtlas {
-                index,
-                layout: assets.texture.clone(),
-            },
             ..Default::default()
+        })
+        .insert(TextureAtlas {
+            index,
+            layout: assets.texture.clone(),
         })
         .insert(Arrows)
         .id()

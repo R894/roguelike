@@ -4,7 +4,7 @@ use crate::ui::{spawn_button, BorderTexture, UiFont};
 
 use super::Menu;
 
-pub fn spawn_menu(mut commands: Commands, border_texture: Res<BorderTexture>, font: Res<UiFont>) {
+pub fn main_menu(mut commands: Commands, border_texture: Res<BorderTexture>, font: Res<UiFont>) {
     let start_button = spawn_button(&mut commands, &border_texture, &font, "Start", (150., 75.));
     let text = TextBundle {
         style: Style {
@@ -18,7 +18,7 @@ pub fn spawn_menu(mut commands: Commands, border_texture: Res<BorderTexture>, fo
                 style: TextStyle {
                     font: font.0.clone(),
                     font_size: 90.0,
-                    color: Color::rgb(0.9, 0.9, 0.9),
+                    color: Color::srgb(0.9, 0.9, 0.9),
                 },
             }],
             ..default()
@@ -64,7 +64,7 @@ pub fn game_over_menu(
                 style: TextStyle {
                     font: font.0.clone(),
                     font_size: 90.0,
-                    color: Color::rgb(0.9, 0.9, 0.9),
+                    color: Color::srgb(0.9, 0.9, 0.9),
                 },
             }],
             ..default()
