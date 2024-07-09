@@ -1,4 +1,4 @@
-mod inventory;
+pub mod inventory;
 
 use bevy::prelude::*;
 use inventory::Inventory;
@@ -7,7 +7,7 @@ use crate::{
     board::{components::Position, systems::spawn_map, ValidSpots},
     graphics::TILE_SIZE,
     pieces::{
-        components::{Actor, Gold, Health, ItemPicker, Melee, Occupier, Piece},
+        components::{Actor, Gold, GoldDrop, Health, ItemPicker, Melee, Occupier, Piece},
         equipment::Equipment,
     },
     states::MainState,
@@ -37,7 +37,7 @@ pub fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
         },
         Melee { damage: 5 },
         Inventory {
-            ..Default::default()
+            items: vec![Box::new(GoldDrop { value: 15 })],
         },
         Piece {
             kind: "Player".to_string(),
