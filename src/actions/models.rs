@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Health, ItemContainer, Occupier, Portal};
+use crate::pieces::components::{Health, ItemContainer, ItemPicker, Occupier, Portal};
 use crate::player::Player;
 use crate::vectors::Vector2Int;
 
@@ -142,6 +142,9 @@ impl Action for DigAction {
 pub struct PickupAction(pub Entity, pub Vector2Int);
 impl Action for PickupAction {
     fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        // ensure that the entity is an item picker before any expensive work is done
+        world.get::<ItemPicker>(self.0).ok_or(())?;
+
         let target_item_entity = world
             .query_filtered::<(Entity, &ItemContainer, &Position), (With<ItemContainer>, Without<Player>)>()
             .iter(world)
@@ -151,6 +154,7 @@ impl Action for PickupAction {
         if target_item_entity.is_none() {
             return Err(());
         }
+
         // unwrap is safe here
         let target_item = target_item_entity.unwrap().1.item.clone();
         let _ = target_item.pick_up(world, self.0, target_item_entity.unwrap().0);
