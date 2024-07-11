@@ -18,7 +18,8 @@ pub struct PiecesPlugin;
 
 impl Plugin for PiecesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(MainState::Game), spawn_npcs.after(spawn_map))
+        app.add_event::<EquipItemEvent>()
+            .add_systems(OnEnter(MainState::Game), spawn_npcs.after(spawn_map))
             .add_systems(OnExit(MainState::Game), (despawn_pieces, despawn_player))
             .add_systems(Update, update_piece_stats.run_if(in_state(MainState::Game)))
             .add_systems(
