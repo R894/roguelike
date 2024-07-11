@@ -6,6 +6,17 @@ use crate::{actions::models::despawn_recursive, player::inventory::Inventory};
 
 use super::components::ItemContainer;
 
+pub enum EquipmentSlot {
+    Weapon,
+    Chest,
+}
+
+#[derive(Event)]
+pub struct EquipItemEvent {
+    pub equippable: Box<dyn Equippable>,
+    pub slot: EquipmentSlot,
+}
+
 #[derive(Component, Default)]
 pub struct Equipment {
     pub weapon: Option<Box<dyn Equippable>>,
@@ -13,6 +24,7 @@ pub struct Equipment {
 }
 
 pub trait Equippable: Send + Sync {
+    fn slot(&self) -> EquipmentSlot;
     fn damage(&self) -> Option<Damage>;
     fn health(&self) -> Option<u32>;
     fn defense(&self) -> Option<u32>;
@@ -51,6 +63,9 @@ pub struct Damage {
 pub struct Sword;
 
 impl Equippable for Sword {
+    fn slot(&self) -> EquipmentSlot {
+        EquipmentSlot::Weapon
+    }
     fn damage(&self) -> Option<Damage> {
         Some(Damage { min: 5, max: 10 })
     }
