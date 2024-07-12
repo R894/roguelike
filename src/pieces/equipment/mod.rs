@@ -26,6 +26,7 @@ pub struct Equipment {
 }
 
 pub trait Equippable: Send + Sync {
+    fn name(&self) -> String;
     fn slot(&self) -> EquipmentSlot;
     fn damage(&self) -> Option<Damage>;
     fn health(&self) -> Option<u32>;
@@ -68,6 +69,9 @@ pub struct Sword;
 impl Equippable for Sword {
     fn slot(&self) -> EquipmentSlot {
         EquipmentSlot::Weapon
+    }
+    fn name(&self) -> String {
+        Item::name(self)
     }
     fn damage(&self) -> Option<Damage> {
         Some(Damage { min: 5, max: 10 })
