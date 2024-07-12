@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
+    pieces::equipment::{EquipItemEvent, Equipment, Equippable, Sword},
     player::{inventory::Inventory, Player},
-    ui::{OriginalColors, UiFont},
+    ui::{OriginalColors, TextBox, UiFont},
 };
 
 const INVENTORY_BACKGROUND_COLOR: Color = Color::srgb(0.15, 0.15, 0.15);
@@ -13,6 +14,12 @@ pub struct InventoryItemContainer;
 
 #[derive(Component)]
 pub struct InventoryMenu;
+
+#[derive(Component)]
+// Holds the index of the item in the inventory
+pub struct InventoryItemRef {
+    pub index: usize,
+}
 
 #[derive(Clone, Debug, Default, Hash, Eq, States, PartialEq)]
 pub enum InventoryState {
@@ -102,7 +109,7 @@ pub fn populate_inventory_items(
 ) {
     if let Ok(player_inventory) = player_inventory_query.get_single() {
         if let Ok(inventory_ui) = inventory_ui_query.get_single_mut() {
-            for item in player_inventory.items.iter() {
+            for (index, item) in player_inventory.items.iter().enumerate() {
                 commands.entity(inventory_ui).with_children(|parent| {
                     parent
                         .spawn(ButtonBundle {
@@ -112,6 +119,7 @@ pub fn populate_inventory_items(
                         .insert(OriginalColors {
                             ..Default::default()
                         })
+                        .insert(InventoryItemRef { index })
                         .with_children(|parent| {
                             parent.spawn(TextBundle::from_section(
                                 item.name(),
@@ -123,6 +131,32 @@ pub fn populate_inventory_items(
                             ));
                         });
                 });
+            }
+        }
+    }
+}
+
+pub fn equip_inventory_item(
+    mut interaction_query: Query<
+        (&Interaction, &InventoryItemRef),
+        (Changed<Interaction>, Without<TextBox>),
+    >,
+    player_inventory_query: Query<&Inventory, With<Player>>,
+    mut event: EventWriter<EquipItemEvent>,
+) {
+    if let Ok(player_inventory) = player_inventory_query.get_single() {
+        for (interaction, item_ref) in &interaction_query {
+            if *interaction == Interaction::Pressed {
+                let item = &player_inventory.items[item_ref.index];
+                if let Some(equippable) = item.as_equippable() {
+                    println!("Equipping {}", item.name());
+                    event.send(EquipItemEvent {
+                        equippable: equippable.clone_box(),
+                        slot: equippable.slot(),
+                    });
+                } else {
+                    println!("Item {} does not implement Equippable", item.name());
+                }
             }
         }
     }

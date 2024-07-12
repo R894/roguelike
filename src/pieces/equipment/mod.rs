@@ -1,5 +1,7 @@
 pub mod systems;
 
+use std::any::Any;
+
 use bevy::prelude::*;
 
 use crate::{actions::models::despawn_recursive, player::inventory::Inventory};
@@ -46,6 +48,7 @@ pub trait Item: Send + Sync {
     ) -> Result<(), ()>;
     fn name(&self) -> String;
     fn clone_box(&self) -> Box<dyn Item>;
+    fn as_equippable(&self) -> Option<Box<dyn Equippable>>;
 }
 
 impl Clone for Box<dyn Item> {
@@ -102,6 +105,10 @@ impl Item for Sword {
 
     fn name(&self) -> String {
         "Sword".to_string()
+    }
+
+    fn as_equippable(&self) -> Option<Box<dyn Equippable>> {
+        Some(Box::new(self.clone()))
     }
 
     fn clone_box(&self) -> Box<dyn Item> {

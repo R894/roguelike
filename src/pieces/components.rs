@@ -47,6 +47,10 @@ impl Item for GoldDrop {
     fn clone_box(&self) -> Box<dyn Item> {
         Box::new(self.clone())
     }
+
+    fn as_equippable(&self) -> Option<Box<dyn super::equipment::Equippable>> {
+        None
+    }
 }
 
 #[derive(Component, Clone)]
@@ -73,6 +77,10 @@ impl Item for HealthDrop {
 
     fn clone_box(&self) -> Box<dyn Item> {
         Box::new(self.clone())
+    }
+
+    fn as_equippable(&self) -> Option<Box<dyn super::equipment::Equippable>> {
+        None
     }
 }
 
