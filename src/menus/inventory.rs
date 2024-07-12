@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    pieces::equipment::{EquipItemEvent, Equipment, Equippable, Sword},
+    pieces::equipment::{EquipItemEvent, Equipment},
     player::{inventory::Inventory, Player},
     ui::{OriginalColors, TextBox, UiFont},
 };
@@ -11,6 +11,9 @@ const INVENTORY_BORDER_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
 #[derive(Component)]
 pub struct InventoryItemContainer;
+
+#[derive(Component)]
+pub struct InventoryEquipmentContainer;
 
 #[derive(Component)]
 pub struct InventoryMenu;
@@ -78,7 +81,32 @@ pub fn spawn_inventory_menu(mut commands: Commands, font: Res<UiFont>) {
                             ));
                         });
                 })
-                .insert(InventoryItemContainer);
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .insert(InventoryItemContainer);
+                })
+                .with_children(|parent| {
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                row_gap: Val::Px(5.0),
+                                column_gap: Val::Px(5.0),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .insert(InventoryEquipmentContainer);
+                });
         });
 }
 
@@ -136,6 +164,64 @@ pub fn populate_inventory_items(
     }
 }
 
+pub fn init_inventory_equipment(
+    mut commands: Commands,
+    mut inventory_equipment_query: Query<Entity, With<InventoryEquipmentContainer>>,
+    font: Res<UiFont>,
+) {
+    if let Ok(inventory_equipment) = inventory_equipment_query.get_single_mut() {
+        add_inventory_button(
+            &mut commands,
+            inventory_equipment,
+            "Weapon: None",
+            font.0.clone(),
+        );
+        add_inventory_button(
+            &mut commands,
+            inventory_equipment,
+            "Chest: None",
+            font.0.clone(),
+        );
+    }
+}
+
+pub fn populate_inventory_equipment(
+    mut commands: Commands,
+    player_equipment_query: Query<&Equipment, (With<Player>, Changed<Equipment>)>,
+    mut inventory_equipment_query: Query<Entity, With<InventoryEquipmentContainer>>,
+    font: Res<UiFont>,
+) {
+    if let Ok(player_equipment) = player_equipment_query.get_single() {
+        if let Ok(inventory_equipment) = inventory_equipment_query.get_single_mut() {
+            // clear old equipment
+            commands.entity(inventory_equipment).despawn_descendants();
+            let mut weapon_name = "None".to_string();
+            let mut chest_name = "None".to_string();
+            if let Some(weapon) = &player_equipment.weapon {
+                weapon_name = weapon.name();
+            }
+
+            if let Some(chest) = &player_equipment.chest {
+                chest_name = chest.name();
+            }
+
+            add_inventory_button(
+                &mut commands,
+                inventory_equipment,
+                format!("Weapon: {}", weapon_name).as_str(),
+                font.0.clone(),
+            );
+
+            add_inventory_button(
+                &mut commands,
+                inventory_equipment,
+                format!("Chest: {}", chest_name).as_str(),
+                font.0.clone(),
+            );
+        }
+    }
+}
+
 pub fn equip_inventory_item(
     mut interaction_query: Query<
         (&Interaction, &InventoryItemRef),
@@ -160,4 +246,27 @@ pub fn equip_inventory_item(
             }
         }
     }
+}
+
+fn add_inventory_button(commands: &mut Commands, entity: Entity, name: &str, font: Handle<Font>) {
+    commands.entity(entity).with_children(|parent| {
+        parent
+            .spawn(ButtonBundle {
+                background_color: Color::NONE.into(),
+                ..default()
+            })
+            .insert(OriginalColors {
+                ..Default::default()
+            })
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    name,
+                    TextStyle {
+                        font,
+                        font_size: 20.0,
+                        color: Color::srgb(0.7, 0.7, 0.7),
+                    },
+                ));
+            });
+    });
 }

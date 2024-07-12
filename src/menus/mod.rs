@@ -20,6 +20,7 @@ impl Plugin for MenuPlugin {
                 (
                     inventory::spawn_inventory_menu,
                     inventory::populate_inventory_items,
+                    inventory::init_inventory_equipment,
                 )
                     .chain(),
             )
@@ -27,6 +28,7 @@ impl Plugin for MenuPlugin {
                 Update,
                 inventory::inventory_input.run_if(in_state(MainState::Game)),
             )
+            .add_systems(Update, inventory::populate_inventory_equipment)
             .add_systems(
                 OnExit(InventoryState::Open),
                 inventory::despawn_inventory_menu,
