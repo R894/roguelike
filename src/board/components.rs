@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::vectors::Vector2Int;
 use bevy::prelude::*;
 
@@ -19,8 +17,3 @@ pub struct Wall;
 
 #[derive(Component)]
 pub struct VisionBlocker;
-
-#[derive(Default, Resource)]
-pub struct BoardRes {
-    pub tiles: HashMap<Vector2Int, Entity>,
-}
