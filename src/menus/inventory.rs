@@ -19,6 +19,12 @@ pub struct InventoryEquipmentContainer;
 pub struct InventoryMenu;
 
 #[derive(Component)]
+pub enum EquipmentButtonSlot {
+    Weapon,
+    Chest,
+}
+
+#[derive(Component)]
 // Holds the index of the item in the inventory
 pub struct InventoryItemRef {
     pub index: usize,
@@ -205,18 +211,20 @@ pub fn populate_inventory_equipment(
                 chest_name = chest.name();
             }
 
-            add_inventory_button(
+            add_equipment_button(
                 &mut commands,
                 inventory_equipment,
                 format!("Weapon: {}", weapon_name).as_str(),
                 font.0.clone(),
+                EquipmentButtonSlot::Weapon,
             );
 
-            add_inventory_button(
+            add_equipment_button(
                 &mut commands,
                 inventory_equipment,
                 format!("Chest: {}", chest_name).as_str(),
                 font.0.clone(),
+                EquipmentButtonSlot::Chest,
             );
         }
     }
@@ -248,6 +256,25 @@ pub fn equip_inventory_item(
     }
 }
 
+pub fn unequip_item_system(
+    interaction_query: Query<
+        (&Interaction, &EquipmentButtonSlot),
+        (Changed<Interaction>, With<EquipmentButtonSlot>),
+    >,
+    mut player_equipment_query: Query<&mut Equipment, With<Player>>,
+) {
+    if let Ok(mut player_equipment) = player_equipment_query.get_single_mut() {
+        for (interaction, slot) in &interaction_query {
+            if *interaction == Interaction::Pressed {
+                match slot {
+                    EquipmentButtonSlot::Weapon => player_equipment.weapon = None,
+                    EquipmentButtonSlot::Chest => player_equipment.chest = None,
+                }
+            }
+        }
+    }
+}
+
 fn add_inventory_button(commands: &mut Commands, entity: Entity, name: &str, font: Handle<Font>) {
     commands.entity(entity).with_children(|parent| {
         parent
@@ -258,6 +285,36 @@ fn add_inventory_button(commands: &mut Commands, entity: Entity, name: &str, fon
             .insert(OriginalColors {
                 ..Default::default()
             })
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    name,
+                    TextStyle {
+                        font,
+                        font_size: 20.0,
+                        color: Color::srgb(0.7, 0.7, 0.7),
+                    },
+                ));
+            });
+    });
+}
+
+fn add_equipment_button(
+    commands: &mut Commands,
+    entity: Entity,
+    name: &str,
+    font: Handle<Font>,
+    slot: EquipmentButtonSlot,
+) {
+    commands.entity(entity).with_children(|parent| {
+        parent
+            .spawn(ButtonBundle {
+                background_color: Color::NONE.into(),
+                ..default()
+            })
+            .insert(OriginalColors {
+                ..Default::default()
+            })
+            .insert(slot)
             .with_children(|parent| {
                 parent.spawn(TextBundle::from_section(
                     name,
