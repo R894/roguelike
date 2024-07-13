@@ -1,7 +1,5 @@
 pub mod systems;
 
-use std::any::Any;
-
 use bevy::prelude::*;
 
 use crate::{actions::models::despawn_recursive, player::inventory::Inventory};
