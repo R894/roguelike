@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     pieces::equipment::{EquipItemEvent, Equipment},
     player::{inventory::Inventory, Player},
+    states::MainState,
     ui::{OriginalColors, TextBox, UiFont},
 };
 
@@ -10,16 +11,16 @@ const INVENTORY_BACKGROUND_COLOR: Color = Color::srgb(0.15, 0.15, 0.15);
 const INVENTORY_BORDER_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
 #[derive(Component)]
-pub struct InventoryItemContainer;
+struct InventoryItemContainer;
 
 #[derive(Component)]
-pub struct InventoryEquipmentContainer;
+struct InventoryEquipmentContainer;
 
 #[derive(Component)]
-pub struct InventoryMenu;
+struct InventoryMenu;
 
 #[derive(Component)]
-pub enum EquipmentButtonSlot {
+enum EquipmentButtonSlot {
     Weapon,
     Chest,
 }
@@ -31,13 +32,40 @@ pub struct InventoryItemRef {
 }
 
 #[derive(Clone, Debug, Default, Hash, Eq, States, PartialEq)]
-pub enum InventoryState {
+enum InventoryState {
     #[default]
     Closed,
     Open,
 }
 
-pub fn spawn_inventory_menu(mut commands: Commands, font: Res<UiFont>) {
+pub struct InventoryPlugin;
+
+impl Plugin for InventoryPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_state::<InventoryState>()
+            .add_systems(Update, inventory_input.run_if(in_state(MainState::Game)))
+            .add_systems(
+                OnEnter(InventoryState::Open),
+                (
+                    spawn_inventory_menu,
+                    populate_inventory_items,
+                    init_inventory_equipment,
+                )
+                    .chain(),
+            )
+            .add_systems(OnExit(InventoryState::Open), despawn_inventory_menu)
+            .add_systems(
+                Update,
+                populate_inventory_equipment.run_if(in_state(InventoryState::Open)),
+            )
+            .add_systems(
+                Update,
+                (equip_inventory_item, unequip_item_system).run_if(in_state(InventoryState::Open)),
+            );
+    }
+}
+
+fn spawn_inventory_menu(mut commands: Commands, font: Res<UiFont>) {
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -116,13 +144,13 @@ pub fn spawn_inventory_menu(mut commands: Commands, font: Res<UiFont>) {
         });
 }
 
-pub fn despawn_inventory_menu(mut commands: Commands, query: Query<Entity, With<InventoryMenu>>) {
+fn despawn_inventory_menu(mut commands: Commands, query: Query<Entity, With<InventoryMenu>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 }
 
-pub fn inventory_input(
+fn inventory_input(
     mut next_state: ResMut<NextState<InventoryState>>,
     keys: ResMut<ButtonInput<KeyCode>>,
 ) {
@@ -135,7 +163,7 @@ pub fn inventory_input(
     }
 }
 
-pub fn populate_inventory_items(
+fn populate_inventory_items(
     mut commands: Commands,
     player_inventory_query: Query<&Inventory, With<Player>>,
     mut inventory_ui_query: Query<Entity, With<InventoryItemContainer>>,
@@ -170,7 +198,7 @@ pub fn populate_inventory_items(
     }
 }
 
-pub fn init_inventory_equipment(
+fn init_inventory_equipment(
     mut commands: Commands,
     mut inventory_equipment_query: Query<Entity, With<InventoryEquipmentContainer>>,
     font: Res<UiFont>,
@@ -191,7 +219,7 @@ pub fn init_inventory_equipment(
     }
 }
 
-pub fn populate_inventory_equipment(
+fn populate_inventory_equipment(
     mut commands: Commands,
     player_equipment_query: Query<&Equipment, (With<Player>, Changed<Equipment>)>,
     mut inventory_equipment_query: Query<Entity, With<InventoryEquipmentContainer>>,
@@ -230,7 +258,7 @@ pub fn populate_inventory_equipment(
     }
 }
 
-pub fn equip_inventory_item(
+fn equip_inventory_item(
     mut interaction_query: Query<
         (&Interaction, &InventoryItemRef),
         (Changed<Interaction>, Without<TextBox>),
@@ -256,7 +284,7 @@ pub fn equip_inventory_item(
     }
 }
 
-pub fn unequip_item_system(
+fn unequip_item_system(
     interaction_query: Query<
         (&Interaction, &EquipmentButtonSlot),
         (Changed<Interaction>, With<EquipmentButtonSlot>),
