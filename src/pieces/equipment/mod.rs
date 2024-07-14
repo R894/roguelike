@@ -117,3 +117,60 @@ impl Item for Sword {
         Box::new(self.clone())
     }
 }
+
+#[derive(Component, Clone)]
+pub struct ChestArmor;
+
+impl Equippable for ChestArmor {
+    fn slot(&self) -> EquipmentSlot {
+        EquipmentSlot::Chest
+    }
+    fn name(&self) -> String {
+        Item::name(self)
+    }
+    fn damage(&self) -> Option<Damage> {
+        None
+    }
+    fn health(&self) -> Option<u32> {
+        Some(10)
+    }
+    fn defense(&self) -> Option<u32> {
+        Some(5)
+    }
+
+    fn clone_box(&self) -> Box<dyn Equippable> {
+        Box::new(self.clone())
+    }
+}
+
+impl Item for ChestArmor {
+    fn pick_up(
+        &self,
+        world: &mut World,
+        player_entity: Entity,
+        item_entity: Entity,
+    ) -> Result<(), ()> {
+        let item = {
+            let item_container_ref = world.get::<ItemContainer>(item_entity).ok_or(())?;
+            item_container_ref.item.clone()
+        };
+
+        let mut inventory = world.get_mut::<Inventory>(player_entity).ok_or(())?;
+        inventory.items.push(item);
+
+        despawn_recursive(world, item_entity);
+        Ok(())
+    }
+
+    fn name(&self) -> String {
+        "Chest Armor".to_string()
+    }
+
+    fn as_equippable(&self) -> Option<Box<dyn Equippable>> {
+        Some(Box::new(self.clone()))
+    }
+
+    fn clone_box(&self) -> Box<dyn Item> {
+        Box::new(self.clone())
+    }
+}

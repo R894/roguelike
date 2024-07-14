@@ -8,7 +8,7 @@ use crate::{
     graphics::TILE_SIZE,
     pieces::{
         components::{Actor, Gold, Health, ItemPicker, Melee, Occupier, Piece},
-        equipment::{Equipment, Sword},
+        equipment::{ChestArmor, Equipment, Sword},
     },
     states::MainState,
 };
@@ -37,7 +37,7 @@ pub fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
         },
         Melee { damage: 5 },
         Inventory {
-            items: vec![Box::new(Sword)],
+            items: vec![Box::new(Sword), Box::new(ChestArmor)],
         },
         Piece {
             kind: "Player".to_string(),
