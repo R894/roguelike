@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::actions::{models::despawn_recursive, Action};
 
-use super::equipment::Item;
+use super::equipment::{Equippable, Item};
 
 #[derive(Component, Default)]
 pub struct Actor(pub Vec<(Box<dyn Action>, i32)>);
@@ -48,7 +48,11 @@ impl Item for GoldDrop {
         Box::new(self.clone())
     }
 
-    fn as_equippable(&self) -> Option<Box<dyn super::equipment::Equippable>> {
+    fn as_mut_equippable(&mut self) -> Option<&mut dyn Equippable> {
+        None
+    }
+
+    fn as_equippable(&self) -> Option<&dyn Equippable> {
         None
     }
 }
@@ -79,7 +83,11 @@ impl Item for HealthDrop {
         Box::new(self.clone())
     }
 
-    fn as_equippable(&self) -> Option<Box<dyn super::equipment::Equippable>> {
+    fn as_mut_equippable(&mut self) -> Option<&mut dyn Equippable> {
+        None
+    }
+
+    fn as_equippable(&self) -> Option<&dyn Equippable> {
         None
     }
 }
