@@ -1,43 +1,83 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 
-use crate::{
-    pieces::components::{Health, Melee, Piece},
-    player::Player,
-};
+use crate::pieces::components::{Health, Melee};
 
-use super::{EquipItemEvent, Equipment};
+use super::{EquipItemEvent, Equipment, UnequipItemEvent};
 
-#[allow(clippy::type_complexity)]
-pub fn update_piece_stats(
-    mut piece_query: Query<
-        (&mut Equipment, &mut Melee, &mut Health),
-        (With<Piece>, Changed<Equipment>),
-    >,
+pub fn equip_item_system(
+    mut stats_query: Query<(&mut Equipment, &mut Health, &mut Melee)>,
+    mut equip_event: EventReader<EquipItemEvent>,
 ) {
-    for (equipment, mut melee, mut piece_health) in piece_query.iter_mut() {
-        if let Some(weapon) = &equipment.weapon {
-            if let Some(damage) = &weapon.damage() {
-                melee.damage += damage.max;
-            }
-        }
+    for event in equip_event.read() {
+        if let Ok((mut equipment, mut health, mut melee)) = stats_query.get_mut(event.entity) {
+            match event.slot {
+                super::EquipmentSlot::Weapon => {
+                    let equippable = event.equippable.lock().unwrap();
+                    health.max += equippable.health().unwrap_or(0);
+                    melee.damage += equippable
+                        .damage()
+                        .unwrap_or(super::Damage { min: 0, max: 0 })
+                        .max;
+                    println!("Health: {}, Damage: {}", health.max, melee.damage);
 
-        if let Some(armor) = &equipment.chest {
-            if let Some(health) = armor.health() {
-                piece_health.max += health;
+                    equipment.weapon = Some(Arc::clone(&event.equippable));
+                }
+                super::EquipmentSlot::Chest => {
+                    let equippable = event.equippable.lock().unwrap();
+                    health.max += equippable.health().unwrap_or(0);
+                    melee.damage += equippable
+                        .damage()
+                        .unwrap_or(super::Damage { min: 0, max: 0 })
+                        .max;
+                    println!("Health: {}, Damage: {}", health.max, melee.damage);
+                    equipment.chest = Some(Arc::clone(&event.equippable));
+                }
             }
         }
     }
 }
 
-pub fn equip_item_system(
-    mut equipment_query: Query<&mut Equipment, With<Player>>,
-    mut pickup_event: EventReader<EquipItemEvent>,
+pub fn unequip_item_system(
+    mut equipment_query: Query<&mut Equipment>,
+    mut stats_query: Query<(&mut Health, &mut Melee)>,
+    mut unequip_event: EventReader<UnequipItemEvent>,
 ) {
-    if let Ok(mut equipment) = equipment_query.get_single_mut() {
-        for event in pickup_event.read() {
+    for event in unequip_event.read() {
+        if let Ok(mut equipment) = equipment_query.get_mut(event.entity) {
+            let (mut health, mut melee) = stats_query.get_mut(event.entity).unwrap();
             match event.slot {
-                super::EquipmentSlot::Weapon => equipment.weapon = Some(event.equippable.clone()),
-                super::EquipmentSlot::Chest => equipment.chest = Some(event.equippable.clone()),
+                super::EquipmentSlot::Weapon => {
+                    if let Some(weapon) = &mut equipment.weapon {
+                        let mut weapon_ref = weapon.lock().unwrap();
+                        health.max -= weapon_ref.health().unwrap_or(0);
+                        melee.damage -= weapon_ref
+                            .damage()
+                            .unwrap_or(super::Damage { min: 0, max: 0 })
+                            .max;
+                        println!("Health: {}, Damage: {}", health.max, melee.damage);
+                        weapon_ref.set_equipped(false);
+                        drop(weapon_ref);
+                        equipment.weapon = None;
+                    }
+                }
+                super::EquipmentSlot::Chest => {
+                    if let Some(armor) = &equipment.chest {
+                        let mut armor_ref = armor.lock().unwrap();
+                        melee.damage -= armor_ref
+                            .damage()
+                            .unwrap_or(super::Damage { min: 0, max: 0 })
+                            .max;
+                        let armor_health = armor_ref.health().unwrap_or(0);
+                        println!("Subtracting {} from {}", armor_health, health.max);
+                        health.max -= armor_health;
+                        println!("Health: {}, Damage: {}", health.max, melee.damage);
+                        armor_ref.set_equipped(false);
+                        drop(armor_ref);
+                        equipment.chest = None;
+                    }
+                }
             }
         }
     }

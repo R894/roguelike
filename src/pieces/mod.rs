@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use components::Piece;
 use equipment::{
-    systems::{equip_item_system, update_piece_stats},
-    EquipItemEvent,
+    systems::{equip_item_system, unequip_item_system},
+    EquipItemEvent, UnequipItemEvent,
 };
 use rand::Rng;
 
@@ -19,12 +19,16 @@ pub struct PiecesPlugin;
 impl Plugin for PiecesPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<EquipItemEvent>()
+            .add_event::<UnequipItemEvent>()
             .add_systems(OnEnter(MainState::Game), spawn_npcs.after(spawn_map))
             .add_systems(OnExit(MainState::Game), (despawn_pieces, despawn_player))
-            .add_systems(Update, update_piece_stats.run_if(in_state(MainState::Game)))
             .add_systems(
                 Update,
                 equip_item_system.run_if(on_event::<EquipItemEvent>()),
+            )
+            .add_systems(
+                Update,
+                unequip_item_system.run_if(on_event::<UnequipItemEvent>()),
             );
     }
 }

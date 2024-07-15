@@ -1,7 +1,9 @@
+use std::sync::{Arc, Mutex};
+
 use bevy::prelude::*;
 
 use crate::{
-    pieces::equipment::{EquipItemEvent, Equipment},
+    pieces::equipment::{EquipItemEvent, Equipment, EquipmentSlot, UnequipItemEvent},
     player::{inventory::Inventory, Player},
     states::MainState,
     ui::{OriginalColors, TextBox, UiFont},
@@ -17,13 +19,10 @@ struct InventoryItemContainer;
 struct InventoryEquipmentContainer;
 
 #[derive(Component)]
-struct InventoryMenu;
+struct InventoryButtonMarker;
 
 #[derive(Component)]
-enum EquipmentButtonSlot {
-    Weapon,
-    Chest,
-}
+struct InventoryMenu;
 
 #[derive(Component)]
 // Holds the index of the item in the inventory
@@ -221,7 +220,7 @@ fn init_inventory_equipment(
 
 fn populate_inventory_equipment(
     mut commands: Commands,
-    player_equipment_query: Query<&Equipment, (With<Player>, Changed<Equipment>)>,
+    player_equipment_query: Query<&Equipment, (With<Player>, With<Equipment>)>,
     mut inventory_equipment_query: Query<Entity, With<InventoryEquipmentContainer>>,
     font: Res<UiFont>,
 ) {
@@ -232,11 +231,11 @@ fn populate_inventory_equipment(
             let mut weapon_name = "None".to_string();
             let mut chest_name = "None".to_string();
             if let Some(weapon) = &player_equipment.weapon {
-                weapon_name = weapon.name();
+                weapon_name = weapon.lock().unwrap().name();
             }
 
             if let Some(chest) = &player_equipment.chest {
-                chest_name = chest.name();
+                chest_name = chest.lock().unwrap().name();
             }
 
             add_equipment_button(
@@ -244,7 +243,7 @@ fn populate_inventory_equipment(
                 inventory_equipment,
                 format!("Weapon: {}", weapon_name).as_str(),
                 font.0.clone(),
-                EquipmentButtonSlot::Weapon,
+                EquipmentSlot::Weapon,
             );
 
             add_equipment_button(
@@ -252,29 +251,34 @@ fn populate_inventory_equipment(
                 inventory_equipment,
                 format!("Chest: {}", chest_name).as_str(),
                 font.0.clone(),
-                EquipmentButtonSlot::Chest,
+                EquipmentSlot::Chest,
             );
         }
     }
 }
 
 fn equip_inventory_item(
-    mut interaction_query: Query<
+    interaction_query: Query<
         (&Interaction, &InventoryItemRef),
         (Changed<Interaction>, Without<TextBox>),
     >,
-    player_inventory_query: Query<&Inventory, With<Player>>,
+    mut player_query: Query<(Entity, &mut Inventory), With<Player>>,
     mut event: EventWriter<EquipItemEvent>,
 ) {
-    if let Ok(player_inventory) = player_inventory_query.get_single() {
+    if let Ok((player_entity, mut player_inventory)) = player_query.get_single_mut() {
         for (interaction, item_ref) in &interaction_query {
             if *interaction == Interaction::Pressed {
-                let item = &player_inventory.items[item_ref.index];
-                if let Some(equippable) = item.as_equippable() {
-                    println!("Equipping {}", item.name());
+                let item = &mut player_inventory.items[item_ref.index];
+                if let Some(equippable) = item.as_mut_equippable() {
+                    if equippable.is_equipped() {
+                        println!("Item {} is already equipped", item.name());
+                        return;
+                    }
+                    equippable.set_equipped(true);
                     event.send(EquipItemEvent {
-                        equippable: equippable.clone_box(),
                         slot: equippable.slot(),
+                        equippable: Arc::new(Mutex::new(equippable.clone_box())),
+                        entity: player_entity,
                     });
                 } else {
                     println!("Item {} does not implement Equippable", item.name());
@@ -286,18 +290,20 @@ fn equip_inventory_item(
 
 fn unequip_item_system(
     interaction_query: Query<
-        (&Interaction, &EquipmentButtonSlot),
-        (Changed<Interaction>, With<EquipmentButtonSlot>),
+        (&Interaction, &EquipmentSlot),
+        (Changed<Interaction>, With<EquipmentSlot>),
     >,
-    mut player_equipment_query: Query<&mut Equipment, With<Player>>,
+    player_entity_query: Query<Entity, With<Player>>,
+    mut event: EventWriter<UnequipItemEvent>,
 ) {
-    if let Ok(mut player_equipment) = player_equipment_query.get_single_mut() {
+    if let Ok(player_entity) = player_entity_query.get_single() {
         for (interaction, slot) in &interaction_query {
             if *interaction == Interaction::Pressed {
-                match slot {
-                    EquipmentButtonSlot::Weapon => player_equipment.weapon = None,
-                    EquipmentButtonSlot::Chest => player_equipment.chest = None,
-                }
+                println!("Unequipping");
+                event.send(UnequipItemEvent {
+                    slot: slot.clone(),
+                    entity: player_entity,
+                });
             }
         }
     }
@@ -331,7 +337,7 @@ fn add_equipment_button(
     entity: Entity,
     name: &str,
     font: Handle<Font>,
-    slot: EquipmentButtonSlot,
+    slot: EquipmentSlot,
 ) {
     commands.entity(entity).with_children(|parent| {
         parent

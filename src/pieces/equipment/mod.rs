@@ -1,26 +1,38 @@
 pub mod systems;
 
+use std::sync::{Arc, Mutex};
+
 use bevy::prelude::*;
 
 use crate::{actions::models::despawn_recursive, player::inventory::Inventory};
 
 use super::components::ItemContainer;
 
+#[derive(Component, Clone)]
 pub enum EquipmentSlot {
     Weapon,
     Chest,
 }
 
+type EquippableRef = Arc<Mutex<Box<dyn Equippable>>>;
+
 #[derive(Event)]
 pub struct EquipItemEvent {
-    pub equippable: Box<dyn Equippable>,
+    pub equippable: EquippableRef,
+    pub entity: Entity,
     pub slot: EquipmentSlot,
+}
+
+#[derive(Event)]
+pub struct UnequipItemEvent {
+    pub slot: EquipmentSlot,
+    pub entity: Entity,
 }
 
 #[derive(Component, Default)]
 pub struct Equipment {
-    pub weapon: Option<Box<dyn Equippable>>,
-    pub chest: Option<Box<dyn Equippable>>,
+    pub weapon: Option<EquippableRef>,
+    pub chest: Option<EquippableRef>,
 }
 
 pub trait Equippable: Send + Sync {
@@ -29,6 +41,8 @@ pub trait Equippable: Send + Sync {
     fn damage(&self) -> Option<Damage>;
     fn health(&self) -> Option<u32>;
     fn defense(&self) -> Option<u32>;
+    fn is_equipped(&self) -> bool;
+    fn set_equipped(&mut self, equipped: bool);
     fn clone_box(&self) -> Box<dyn Equippable>;
 }
 
@@ -47,7 +61,8 @@ pub trait Item: Send + Sync {
     ) -> Result<(), ()>;
     fn name(&self) -> String;
     fn clone_box(&self) -> Box<dyn Item>;
-    fn as_equippable(&self) -> Option<Box<dyn Equippable>>;
+    fn as_equippable(&self) -> Option<&dyn Equippable>;
+    fn as_mut_equippable(&mut self) -> Option<&mut dyn Equippable>;
 }
 
 impl Clone for Box<dyn Item> {
@@ -61,8 +76,10 @@ pub struct Damage {
     pub max: u32,
 }
 
-#[derive(Component, Clone)]
-pub struct Sword;
+#[derive(Component, Clone, Default)]
+pub struct Sword {
+    equipped: bool,
+}
 
 impl Equippable for Sword {
     fn slot(&self) -> EquipmentSlot {
@@ -76,6 +93,12 @@ impl Equippable for Sword {
     }
     fn health(&self) -> Option<u32> {
         None
+    }
+    fn is_equipped(&self) -> bool {
+        self.equipped
+    }
+    fn set_equipped(&mut self, equipped: bool) {
+        self.equipped = equipped
     }
     fn defense(&self) -> Option<u32> {
         None
@@ -109,8 +132,12 @@ impl Item for Sword {
         "Sword".to_string()
     }
 
-    fn as_equippable(&self) -> Option<Box<dyn Equippable>> {
-        Some(Box::new(self.clone()))
+    fn as_equippable(&self) -> Option<&dyn Equippable> {
+        Some(self)
+    }
+
+    fn as_mut_equippable(&mut self) -> Option<&mut dyn Equippable> {
+        Some(self)
     }
 
     fn clone_box(&self) -> Box<dyn Item> {
@@ -118,8 +145,10 @@ impl Item for Sword {
     }
 }
 
-#[derive(Component, Clone)]
-pub struct ChestArmor;
+#[derive(Component, Clone, Default)]
+pub struct ChestArmor {
+    equipped: bool,
+}
 
 impl Equippable for ChestArmor {
     fn slot(&self) -> EquipmentSlot {
@@ -130,6 +159,12 @@ impl Equippable for ChestArmor {
     }
     fn damage(&self) -> Option<Damage> {
         None
+    }
+    fn is_equipped(&self) -> bool {
+        self.equipped
+    }
+    fn set_equipped(&mut self, equipped: bool) {
+        self.equipped = equipped
     }
     fn health(&self) -> Option<u32> {
         Some(10)
@@ -166,8 +201,12 @@ impl Item for ChestArmor {
         "Chest Armor".to_string()
     }
 
-    fn as_equippable(&self) -> Option<Box<dyn Equippable>> {
-        Some(Box::new(self.clone()))
+    fn as_equippable(&self) -> Option<&dyn Equippable> {
+        Some(self)
+    }
+
+    fn as_mut_equippable(&mut self) -> Option<&mut dyn Equippable> {
+        Some(self)
     }
 
     fn clone_box(&self) -> Box<dyn Item> {
