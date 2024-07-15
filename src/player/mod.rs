@@ -37,7 +37,7 @@ pub fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
         },
         Melee { damage: 5 },
         Inventory {
-            items: vec![Box::new(Sword), Box::new(ChestArmor)],
+            items: vec![Box::new(Sword::default()), Box::new(ChestArmor::default())],
         },
         Piece {
             kind: "Player".to_string(),
