@@ -44,6 +44,10 @@ impl Item for GoldDrop {
         "Gold".to_string()
     }
 
+    fn id(&self) -> u32 {
+        0
+    }
+
     fn clone_box(&self) -> Box<dyn Item> {
         Box::new(self.clone())
     }
@@ -77,6 +81,10 @@ impl Item for HealthDrop {
 
     fn name(&self) -> String {
         "Health".to_string()
+    }
+
+    fn id(&self) -> u32 {
+        0
     }
 
     fn clone_box(&self) -> Box<dyn Item> {

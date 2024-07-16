@@ -55,7 +55,8 @@ impl Plugin for InventoryPlugin {
             .add_systems(OnExit(InventoryState::Open), despawn_inventory_menu)
             .add_systems(
                 Update,
-                populate_inventory_equipment.run_if(in_state(InventoryState::Open)),
+                (populate_inventory_equipment, populate_inventory_items)
+                    .run_if(in_state(InventoryState::Open)),
             )
             .add_systems(
                 Update,
@@ -164,12 +165,13 @@ fn inventory_input(
 
 fn populate_inventory_items(
     mut commands: Commands,
-    player_inventory_query: Query<&Inventory, With<Player>>,
+    player_inventory_query: Query<&Inventory, (With<Player>, Changed<Inventory>)>,
     mut inventory_ui_query: Query<Entity, With<InventoryItemContainer>>,
     font: Res<UiFont>,
 ) {
     if let Ok(player_inventory) = player_inventory_query.get_single() {
         if let Ok(inventory_ui) = inventory_ui_query.get_single_mut() {
+            commands.entity(inventory_ui).despawn_descendants();
             for (index, item) in player_inventory.items.iter().enumerate() {
                 commands.entity(inventory_ui).with_children(|parent| {
                     parent
@@ -220,7 +222,7 @@ fn init_inventory_equipment(
 
 fn populate_inventory_equipment(
     mut commands: Commands,
-    player_equipment_query: Query<&Equipment, (With<Player>, With<Equipment>)>,
+    player_equipment_query: Query<&Equipment, (With<Player>, Changed<Equipment>)>,
     mut inventory_equipment_query: Query<Entity, With<InventoryEquipmentContainer>>,
     font: Res<UiFont>,
 ) {
@@ -231,11 +233,11 @@ fn populate_inventory_equipment(
             let mut weapon_name = "None".to_string();
             let mut chest_name = "None".to_string();
             if let Some(weapon) = &player_equipment.weapon {
-                weapon_name = weapon.lock().unwrap().name();
+                weapon_name = weapon.name();
             }
 
             if let Some(chest) = &player_equipment.chest {
-                chest_name = chest.lock().unwrap().name();
+                chest_name = chest.name();
             }
 
             add_equipment_button(
@@ -269,15 +271,10 @@ fn equip_inventory_item(
         for (interaction, item_ref) in &interaction_query {
             if *interaction == Interaction::Pressed {
                 let item = &mut player_inventory.items[item_ref.index];
-                if let Some(equippable) = item.as_mut_equippable() {
-                    if equippable.is_equipped() {
-                        println!("Item {} is already equipped", item.name());
-                        return;
-                    }
-                    equippable.set_equipped(true);
+                if let Some(equippable) = item.as_equippable() {
                     event.send(EquipItemEvent {
                         slot: equippable.slot(),
-                        equippable: Arc::new(Mutex::new(equippable.clone_box())),
+                        id: item.id(),
                         entity: player_entity,
                     });
                 } else {

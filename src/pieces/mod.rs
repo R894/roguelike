@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use components::Piece;
 use equipment::{
-    systems::{equip_item_system, unequip_item_system},
+    systems::{equip_event_system, unequip_event_system},
     EquipItemEvent, UnequipItemEvent,
 };
 use rand::Rng;
@@ -24,11 +24,11 @@ impl Plugin for PiecesPlugin {
             .add_systems(OnExit(MainState::Game), (despawn_pieces, despawn_player))
             .add_systems(
                 Update,
-                equip_item_system.run_if(on_event::<EquipItemEvent>()),
+                equip_event_system.run_if(on_event::<EquipItemEvent>()),
             )
             .add_systems(
                 Update,
-                unequip_item_system.run_if(on_event::<UnequipItemEvent>()),
+                unequip_event_system.run_if(on_event::<UnequipItemEvent>()),
             );
     }
 }
