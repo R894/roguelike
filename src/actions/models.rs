@@ -168,6 +168,11 @@ impl Action for PickupAction {
 pub struct NextLevelAction(pub Entity, pub Vector2Int);
 impl Action for NextLevelAction {
     fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        // ensure that the entity is a player before any expensive work is done
+        if world.get::<Player>(self.0).is_none() {
+            return Err(());
+        }
+
         let target_portal = world
             .query_filtered::<(Entity, &Position), With<Portal>>()
             .iter(world)
