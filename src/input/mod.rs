@@ -33,11 +33,11 @@ impl Plugin for InputPlugin {
     }
 }
 
-const DIR_KEY_MAPPING: [(KeyCode, Vector2Int); 4] = [
-    (KeyCode::KeyW, Vector2Int::UP),
-    (KeyCode::KeyS, Vector2Int::DOWN),
-    (KeyCode::KeyA, Vector2Int::LEFT),
-    (KeyCode::KeyD, Vector2Int::RIGHT),
+const DIR_KEY_MAPPING: [((KeyCode, KeyCode), Vector2Int); 4] = [
+    ((KeyCode::KeyW, KeyCode::ArrowUp), Vector2Int::UP),
+    ((KeyCode::KeyS, KeyCode::ArrowDown), Vector2Int::DOWN),
+    ((KeyCode::KeyA, KeyCode::ArrowLeft), Vector2Int::LEFT),
+    ((KeyCode::KeyD, KeyCode::ArrowRight), Vector2Int::RIGHT),
 ];
 
 const UP_INDEX: usize = 1052;
@@ -81,7 +81,7 @@ fn player_position(
 
     if state.get() == &ActionDirectionSelectionState::Pending {
         for (key, dir) in DIR_KEY_MAPPING {
-            if !keys.just_pressed(key) {
+            if !keys.just_pressed(key.0) && !keys.just_pressed(key.1) {
                 continue;
             }
 
@@ -96,7 +96,7 @@ fn player_position(
     }
 
     for (key, dir) in DIR_KEY_MAPPING {
-        if !keys.just_pressed(key) {
+        if !keys.just_pressed(key.0) && !keys.just_pressed(key.1) {
             continue;
         }
         if *state.get() != ActionDirectionSelectionState::None {
