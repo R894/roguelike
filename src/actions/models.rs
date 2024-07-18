@@ -14,8 +14,8 @@ impl Action for DamageAction {
         let Some(mut health) = world.get_mut::<Health>(self.0) else {
             return Err(());
         };
-        health.current = health.current.saturating_sub(self.1);
-        if health.current == 0 {
+        health.current.min = health.current.min.saturating_sub(self.1);
+        if health.current.min == 0 {
             // the unit is killed
             // if its a player send the gameover event
             if world.get::<Player>(self.0).is_some() {

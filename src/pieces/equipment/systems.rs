@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    pieces::components::{Health, Melee},
+    pieces::components::{Damage, Health, Melee},
     player::inventory::Inventory,
 };
 
@@ -46,6 +46,39 @@ fn equip_item(equipment: &mut Equipment, item: Box<dyn Item>, slot: EquipmentSlo
     }
 }
 
+pub fn update_stats(
+    mut stats_query: Query<(&mut Health, &mut Melee, &Equipment), Changed<Equipment>>,
+) {
+    for (mut health, mut melee, equipment) in stats_query.iter_mut() {
+        health.current = health.base;
+        melee.current_damage = melee.base_damage;
+        if let Some(item) = &equipment.weapon {
+            if let Some(weapon) = item.as_equippable() {
+                if let Some(damage) = weapon.damage() {
+                    melee.current_damage = damage;
+                }
+
+                if let Some(weapon_health) = weapon.health() {
+                    health.current.max += weapon_health;
+                }
+            }
+        }
+        if let Some(item) = &equipment.chest {
+            if let Some(chest) = item.as_equippable() {
+                if let Some(damage) = chest.damage() {
+                    melee.current_damage = damage;
+                }
+
+                if let Some(weapon_health) = chest.health() {
+                    health.current.max += weapon_health;
+                }
+            }
+        }
+        println!("Current max health: {}", health.current.max);
+        println!("Current damage: {}", melee.current_damage.max);
+    }
+}
+
 pub fn unequip_and_return_item(
     equipment: &mut Equipment,
     slot: EquipmentSlot,
@@ -63,6 +96,7 @@ pub fn unequip_event_system(
     for event in unequip_event.read() {
         if let Ok((mut equipment, mut inventory)) = stats_query.get_mut(event.entity) {
             if let Some(item) = unequip_and_return_item(&mut equipment, event.slot.clone()) {
+                println!("Unequipped {}", item.name());
                 inventory.items.push(item);
             }
         }

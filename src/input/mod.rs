@@ -110,7 +110,7 @@ fn player_position(
             Box::new(MeleeHitAction {
                 attacker: entity,
                 target: position.v + dir,
-                damage: melee.damage,
+                damage: melee.current_damage.min,
             }),
             0,
         );

@@ -201,22 +201,40 @@ fn populate_inventory_items(
 
 fn init_inventory_equipment(
     mut commands: Commands,
+    player_equipment_query: Query<&Equipment, With<Player>>,
     mut inventory_equipment_query: Query<Entity, With<InventoryEquipmentContainer>>,
     font: Res<UiFont>,
 ) {
-    if let Ok(inventory_equipment) = inventory_equipment_query.get_single_mut() {
-        add_inventory_button(
-            &mut commands,
-            inventory_equipment,
-            "Weapon: None",
-            font.0.clone(),
-        );
-        add_inventory_button(
-            &mut commands,
-            inventory_equipment,
-            "Chest: None",
-            font.0.clone(),
-        );
+    if let Ok(player_equipment) = player_equipment_query.get_single() {
+        if let Ok(inventory_equipment) = inventory_equipment_query.get_single_mut() {
+            // clear old equipment
+            commands.entity(inventory_equipment).despawn_descendants();
+            let mut weapon_name = "None".to_string();
+            let mut chest_name = "None".to_string();
+            if let Some(weapon) = &player_equipment.weapon {
+                weapon_name = weapon.name();
+            }
+
+            if let Some(chest) = &player_equipment.chest {
+                chest_name = chest.name();
+            }
+
+            add_equipment_button(
+                &mut commands,
+                inventory_equipment,
+                format!("Weapon: {}", weapon_name).as_str(),
+                font.0.clone(),
+                EquipmentSlot::Weapon,
+            );
+
+            add_equipment_button(
+                &mut commands,
+                inventory_equipment,
+                format!("Chest: {}", chest_name).as_str(),
+                font.0.clone(),
+                EquipmentSlot::Chest,
+            );
+        }
     }
 }
 

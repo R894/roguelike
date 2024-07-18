@@ -9,7 +9,19 @@ pub struct Actor(pub Vec<(Box<dyn Action>, i32)>);
 
 #[derive(Component)]
 pub struct Health {
-    pub current: u32,
+    pub base: Range,
+    pub current: Range,
+}
+
+#[derive(Clone, Copy)]
+pub struct Damage {
+    pub min: u32,
+    pub max: u32,
+}
+
+#[derive(Clone, Copy)]
+pub struct Range {
+    pub min: u32,
     pub max: u32,
 }
 
@@ -74,7 +86,10 @@ impl Item for HealthDrop {
         item_entity: Entity,
     ) -> Result<(), ()> {
         let mut player_health = world.get_mut::<Health>(player_entity).ok_or(())?;
-        player_health.current = player_health.max.min(player_health.current + self.value);
+        player_health.current.min = player_health
+            .current
+            .max
+            .min(player_health.current.min + self.value);
         despawn_recursive(world, item_entity);
         Ok(())
     }
@@ -102,7 +117,8 @@ impl Item for HealthDrop {
 
 #[derive(Component)]
 pub struct Melee {
-    pub damage: u32,
+    pub base_damage: Damage,
+    pub current_damage: Damage,
 }
 
 #[derive(Component)]

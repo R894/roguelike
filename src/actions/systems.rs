@@ -151,9 +151,10 @@ pub fn plan_melee(
     let action = Box::new(MeleeHitAction {
         attacker: *entity,
         target: player_position.v,
-        damage: melee.damage,
+        damage: melee.current_damage.min,
     });
-    actor
-        .0
-        .push((action, PLAYER_ATTACK_SCORE + melee.damage as i32))
+    actor.0.push((
+        action,
+        PLAYER_ATTACK_SCORE + melee.current_damage.min as i32,
+    ))
 }

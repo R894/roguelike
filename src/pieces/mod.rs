@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use components::Piece;
+use components::{Damage, Piece, Range};
 use equipment::{
-    systems::{equip_event_system, unequip_event_system},
+    systems::{equip_event_system, unequip_event_system, update_stats},
     EquipItemEvent, UnequipItemEvent,
 };
 use rand::Rng;
@@ -26,6 +26,7 @@ impl Plugin for PiecesPlugin {
                 Update,
                 equip_event_system.run_if(on_event::<EquipItemEvent>()),
             )
+            .add_systems(Update, update_stats)
             .add_systems(
                 Update,
                 unequip_event_system.run_if(on_event::<UnequipItemEvent>()),
@@ -47,13 +48,16 @@ fn spawn_test_npc(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
     commands.spawn((
         components::Actor::default(),
         components::Health {
-            max: 10,
-            current: 10,
+            base: Range { min: 10, max: 10 },
+            current: Range { min: 10, max: 10 },
         },
         components::Piece {
             kind: "NPC".to_string(),
         },
-        components::Melee { damage: 1 },
+        components::Melee {
+            base_damage: Damage { min: 1, max: 1 },
+            current_damage: Damage { min: 1, max: 1 },
+        },
         components::Occupier,
         Position {
             v: valid_spots.0[rand],

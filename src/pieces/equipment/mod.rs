@@ -1,15 +1,10 @@
 pub mod systems;
 
-use std::{
-    default,
-    sync::{Arc, Mutex},
-};
-
 use bevy::prelude::*;
 
 use crate::{actions::models::despawn_recursive, player::inventory::Inventory};
 
-use super::components::ItemContainer;
+use super::components::{Damage, ItemContainer};
 
 #[derive(Component, Clone, PartialEq, Eq)]
 pub enum EquipmentSlot {
@@ -71,15 +66,9 @@ impl Clone for Box<dyn Item> {
     }
 }
 
-pub struct Damage {
-    pub min: u32,
-    pub max: u32,
-}
-
 #[derive(Component, Clone, Default)]
 pub struct Sword {
-    equipped: bool,
-    id: u32,
+    pub id: u32,
 }
 
 impl Equippable for Sword {
@@ -146,8 +135,7 @@ impl Item for Sword {
 
 #[derive(Component, Clone, Default)]
 pub struct ChestArmor {
-    equipped: bool,
-    id: u32,
+    pub id: u32,
 }
 
 impl Equippable for ChestArmor {

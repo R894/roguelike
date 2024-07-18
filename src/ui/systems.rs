@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    pieces::components::{Gold, Health},
+    pieces::components::{Gold, Health, Range},
     player::Player,
 };
 
@@ -60,11 +60,12 @@ pub fn update_ui_health(
     mut text_query: Query<&mut Text, With<UiHealth>>,
     health_query: Query<&Health, With<Player>>,
 ) {
-    let health = health_query
-        .get_single()
-        .unwrap_or(&Health { current: 0, max: 0 });
+    let health = health_query.get_single().unwrap_or(&Health {
+        base: Range { min: 0, max: 0 },
+        current: Range { min: 0, max: 0 },
+    });
     for mut text in &mut text_query {
-        text.sections[0].value = format!("Health: {}", health.current);
+        text.sections[0].value = format!("Health: {}", health.current.min);
     }
 }
 
