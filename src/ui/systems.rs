@@ -65,7 +65,7 @@ pub fn update_ui_health(
         current: Range { min: 0, max: 0 },
     });
     for mut text in &mut text_query {
-        text.sections[0].value = format!("Health: {}", health.current.min);
+        text.sections[0].value = format!("Health: {}/{}", health.current.min, health.current.max);
     }
 }
 
