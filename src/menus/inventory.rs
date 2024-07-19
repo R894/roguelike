@@ -47,7 +47,7 @@ impl Plugin for InventoryPlugin {
                 OnEnter(InventoryState::Open),
                 (
                     spawn_inventory_menu,
-                    populate_inventory_items,
+                    init_inventory_items,
                     init_inventory_equipment,
                 )
                     .chain(),
@@ -121,6 +121,8 @@ fn spawn_inventory_menu(mut commands: Commands, font: Res<UiFont>) {
                             style: Style {
                                 width: Val::Percent(100.),
                                 height: Val::Percent(100.),
+                                row_gap: Val::Px(5.0),
+                                column_gap: Val::Px(5.0),
                                 ..Default::default()
                             },
                             ..Default::default()
@@ -160,6 +162,42 @@ fn inventory_input(
 
     if keys.just_pressed(KeyCode::KeyI) {
         next_state.set(InventoryState::Open);
+    }
+}
+
+fn init_inventory_items(
+    mut commands: Commands,
+    player_inventory_query: Query<&Inventory, With<Player>>,
+    mut inventory_ui_query: Query<Entity, With<InventoryItemContainer>>,
+    font: Res<UiFont>,
+) {
+    if let Ok(player_inventory) = player_inventory_query.get_single() {
+        if let Ok(inventory_ui) = inventory_ui_query.get_single_mut() {
+            commands.entity(inventory_ui).despawn_descendants();
+            for (index, item) in player_inventory.items.iter().enumerate() {
+                commands.entity(inventory_ui).with_children(|parent| {
+                    parent
+                        .spawn(ButtonBundle {
+                            background_color: Color::NONE.into(),
+                            ..default()
+                        })
+                        .insert(OriginalColors {
+                            ..Default::default()
+                        })
+                        .insert(InventoryItemRef { index })
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                item.name(),
+                                TextStyle {
+                                    font: font.0.clone(),
+                                    font_size: 20.0,
+                                    color: Color::srgb(0.7, 0.7, 0.7),
+                                },
+                            ));
+                        });
+                });
+            }
+        }
     }
 }
 
