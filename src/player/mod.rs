@@ -36,8 +36,8 @@ pub fn spawn_player(mut commands: Commands, valid_spots: Res<ValidSpots>) {
             current: Range { min: 10, max: 10 },
         },
         Melee {
-            base_damage: Damage { min: 5, max: 10 },
-            current_damage: Damage { min: 5, max: 10 },
+            base_damage: Damage { min: 5, max: 5 },
+            current_damage: Damage { min: 5, max: 5 },
         },
         Inventory {
             items: vec![Box::new(Sword { id: 5 }), Box::new(ChestArmor { id: 6 })],
