@@ -28,6 +28,30 @@ impl Vector2Int {
         let dy = (self.y - other.y).pow(2) as f64;
         (dx + dy).sqrt() as i32
     }
+
+    pub fn circle_edge(&self, radius: i32) -> Vec<Vector2Int> {
+        let mut tiles = Vec::new();
+        for x in self.x - radius..=self.x + radius {
+            for y in self.y - radius..=self.y + radius {
+                if (x - self.x).pow(2) + (y - self.y).pow(2) == radius.pow(2) {
+                    tiles.push(Vector2Int::new(x, y));
+                }
+            }
+        }
+        tiles
+    }
+
+    pub fn circle_area(&self, radius: i32) -> Vec<Vector2Int> {
+        let mut tiles = Vec::new();
+        for x in self.x - radius..=self.x + radius {
+            for y in self.y - radius..=self.y + radius {
+                if (x - self.x).pow(2) + (y - self.y).pow(2) <= radius.pow(2) {
+                    tiles.push(Vector2Int::new(x, y));
+                }
+            }
+        }
+        tiles
+    }
 }
 
 impl Add for Vector2Int {
