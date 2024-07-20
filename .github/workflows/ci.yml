@@ -36,13 +36,22 @@ jobs:
           --out-name "roguelike" \
           ./target/wasm32-unknown-unknown/release/roguelike.wasm
 
+    - name: Prepare web branch contents
+      run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir temp_web
+          cp -r ./out/* temp_web
+          mkdir temp_web/assets
+          cp -r assets/* temp_web/assets/
+          cp .github/workflows/index.html temp_web/
+
     - name: Commit and push to web branch
       run: |
+        cd temp_web
+        git init
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git checkout --orphan web
-        git reset
-        cp -r ./out/* .
         git add .
         git commit -m "Deploy to web branch"
-        git push --force origin web
+        git push --force https://github.com/${{ github.repository }} HEAD:web 
