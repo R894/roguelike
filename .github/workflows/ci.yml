@@ -1,0 +1,48 @@
+name: Rust WASM CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+
+    - name: Install wasm32-unknown-unknown target
+      run: rustup target add wasm32-unknown-unknown
+
+    - name: Install wasm-bindgen-cli
+      run: cargo install wasm-bindgen-cli
+
+    - name: Build to WASM
+      run: cargo build --release --target wasm32-unknown-unknown
+
+    - name: Run wasm-bindgen
+      run: |
+        wasm-bindgen --no-typescript --target web \
+          --out-dir ./out/ \
+          --out-name "roguelike" \
+          ./target/wasm32-unknown-unknown/release/roguelike.wasm
+
+    - name: Commit and push to web branch
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git checkout --orphan web
+        git reset
+        cp -r ./out/* .
+        git add .
+        git commit -m "Deploy to web branch"
+        git push --force origin web
