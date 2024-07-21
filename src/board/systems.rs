@@ -1,6 +1,6 @@
 use crate::pieces::components::Occupier;
 use crate::player::Player;
-use crate::vectors::Vector2Int;
+use crate::vectors::{line_of_sight, Vector2Int};
 
 use super::components::{Position, Tile, VisionBlocker, Wall};
 use super::dungeon::{room, tunneler, Area, Dungeon};
@@ -66,59 +66,22 @@ pub fn update_tile_visibility(
 
     let blocker_positions: Vec<Vector2Int> = blocker_query.iter().map(|b| b.v).collect();
 
+    let area = player_position.v.circle_area(VISIBILITY_RANGE);
+
+    let visible_positions = line_of_sight(player_position.v, area, &blocker_positions);
+
     for (mut tile, position) in tile_query.iter_mut() {
         let within_range = position.v.distance(player_position.v) <= VISIBILITY_RANGE;
-        let mut los = false;
-        if within_range {
-            let (first_blocker, in_sight) =
-                line_of_sight(player_position.v, position.v, &blocker_positions);
 
-            los = in_sight || first_blocker == Some(position.v);
-        }
+        let in_sight = visible_positions.contains(&position.v);
 
-        if within_range && los {
+        if within_range && in_sight {
             tile.visible = true;
             tile.seen = true;
         } else {
             tile.visible = false;
         }
     }
-}
-
-fn line_of_sight(
-    start: Vector2Int,
-    end: Vector2Int,
-    blocker_positions: &[Vector2Int],
-) -> (Option<Vector2Int>, bool) {
-    let mut x0 = start.x;
-    let mut y0 = start.y;
-    let x1 = end.x;
-    let y1 = end.y;
-
-    let dx = (x1 - x0).abs();
-    let dy = (y1 - y0).abs();
-    let sx = if x0 < x1 { 1 } else { -1 };
-    let sy = if y0 < y1 { 1 } else { -1 };
-    let mut err = dx - dy;
-
-    loop {
-        if blocker_positions.contains(&Vector2Int::new(x0, y0)) {
-            return (Some(Vector2Int::new(x0, y0)), false);
-        }
-        if x0 == x1 && y0 == y1 {
-            break;
-        }
-        let e2 = 2 * err;
-        if e2 > -dy {
-            err -= dy;
-            x0 += sx;
-        }
-        if e2 < dx {
-            err += dx;
-            y0 += sy;
-        }
-    }
-    (None, true)
 }
 
 pub fn despawn_map(
