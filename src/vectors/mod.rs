@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
+use std::{
+    collections::HashSet,
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
+};
 
 mod utils;
 pub use utils::find_path;
@@ -41,12 +44,12 @@ impl Vector2Int {
         tiles
     }
 
-    pub fn circle_area(&self, radius: i32) -> Vec<Vector2Int> {
-        let mut tiles = Vec::new();
+    pub fn circle_area(&self, radius: i32) -> HashSet<Vector2Int> {
+        let mut tiles = HashSet::new();
         for x in self.x - radius..=self.x + radius {
             for y in self.y - radius..=self.y + radius {
                 if (x - self.x).pow(2) + (y - self.y).pow(2) <= radius.pow(2) {
-                    tiles.push(Vector2Int::new(x, y));
+                    tiles.insert(Vector2Int::new(x, y));
                 }
             }
         }
@@ -125,7 +128,7 @@ pub const ORTHO_DIRECTIONS: [Vector2Int; 4] = [
 pub fn cast_line(
     start: Vector2Int,
     end: Vector2Int,
-    blocker_positions: &[Vector2Int],
+    blocker_positions: &HashSet<Vector2Int>,
 ) -> Vec<Vector2Int> {
     let mut path = Vec::new();
     let mut x0 = start.x;
@@ -170,8 +173,8 @@ pub fn cast_line(
 /// line of sight takes a start point and a list of perimeter points and returns a vector of the points in the path of the line of sight
 pub fn line_of_sight(
     start: Vector2Int,
-    area: Vec<Vector2Int>,
-    blocker_positions: &[Vector2Int],
+    area: HashSet<Vector2Int>,
+    blocker_positions: &HashSet<Vector2Int>,
 ) -> Vec<Vector2Int> {
     let mut path = Vec::new();
 

@@ -6,7 +6,7 @@ use super::components::{Position, Tile, VisionBlocker, Wall};
 use super::dungeon::{room, tunneler, Area, Dungeon};
 use super::{CurrentBoard, ValidSpots};
 use bevy::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub const VISIBILITY_RANGE: i32 = 10;
 
@@ -64,7 +64,7 @@ pub fn update_tile_visibility(
         return;
     };
 
-    let blocker_positions: Vec<Vector2Int> = blocker_query.iter().map(|b| b.v).collect();
+    let blocker_positions: HashSet<Vector2Int> = blocker_query.iter().map(|b| b.v).collect();
 
     let area = player_position.v.circle_area(VISIBILITY_RANGE);
 
