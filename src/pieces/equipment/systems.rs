@@ -1,11 +1,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    pieces::components::{Damage, Health, Melee},
-    player::inventory::Inventory,
+    pieces::components::{Health, Melee},
+    player::{inventory::Inventory, Player},
 };
 
-use super::{EquipItemEvent, Equipment, EquipmentSlot, Item, UnequipItemEvent};
+use super::{
+    EquipItemEvent, Equipment, EquipmentSlot, Item, PlayerEquipItemEvent, UnequipItemEvent,
+};
 
 pub fn equip_event_system(
     mut stats_query: Query<(&mut Equipment, &mut Inventory)>,
@@ -30,6 +32,20 @@ pub fn equip_event_system(
                 equip_item(&mut equipment, item, event.slot.clone());
             }
         }
+    }
+}
+
+pub fn player_equip_event_system(
+    player_query: Query<Entity, With<Player>>,
+    mut ev: EventReader<PlayerEquipItemEvent>,
+    mut equip_event: EventWriter<EquipItemEvent>,
+) {
+    for event in ev.read() {
+        equip_event.send(EquipItemEvent {
+            entity: player_query.single(),
+            id: event.id,
+            slot: event.slot.clone(),
+        });
     }
 }
 

@@ -13,6 +13,7 @@ mod states;
 mod ui;
 mod vectors;
 
+use belly::build::BellyPlugin;
 use bevy::prelude::*;
 use states::{GameState, MainState};
 
@@ -33,6 +34,7 @@ fn main() {
         .init_state::<MainState>()
         .init_state::<GameState>()
         .insert_resource(Msaa::Off)
+        .add_plugins(BellyPlugin)
         .add_plugins(camera::CameraPlugin)
         .add_plugins(actions::ActionsPlugin)
         .add_plugins(ui::UiPlugin)

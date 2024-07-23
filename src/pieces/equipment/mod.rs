@@ -12,6 +12,12 @@ pub enum EquipmentSlot {
     Chest,
 }
 
+#[derive(Event, Clone)]
+pub struct PlayerEquipItemEvent {
+    pub slot: EquipmentSlot,
+    pub id: u32,
+}
+
 #[derive(Event)]
 pub struct EquipItemEvent {
     pub entity: Entity,
