@@ -37,9 +37,9 @@ pub fn update_tile_colors(
     for (mut sprite, children, tile) in query.iter_mut() {
         let mut color = sprite.color;
         if tile.visible {
-            color.set_alpha(1.0);
+            color.set_a(1.0);
         } else if tile.seen {
-            color.set_alpha(0.1);
+            color.set_a(0.1);
         }
         sprite.color = color;
 

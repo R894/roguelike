@@ -35,7 +35,7 @@ fn spawn_health_ui(commands: &mut Commands, font: &Res<UiFont>) -> Entity {
             TextStyle {
                 font: font.0.clone(),
                 font_size: 30.0,
-                color: Color::srgb(0.7, 0.7, 0.7),
+                color: Color::rgb(0.7, 0.7, 0.7),
             },
         ))
         .insert(UiHealth)
@@ -49,7 +49,7 @@ fn spawn_gold_ui(commands: &mut Commands, font: &Res<UiFont>) -> Entity {
             TextStyle {
                 font: font.0.clone(),
                 font_size: 30.0,
-                color: Color::srgb(0.7, 0.7, 0.7),
+                color: Color::rgb(0.7, 0.7, 0.7),
             },
         ))
         .insert(UiGold)

@@ -4,9 +4,9 @@ use bevy::prelude::*;
 
 use crate::states::MainState;
 
-pub const NORMAL_BUTTON: Color = Color::srgb(0.8, 0.8, 0.8);
-pub const HOVERED_BUTTON: Color = Color::srgb(0.9, 0.9, 0.9);
-pub const PRESSED_BUTTON: Color = Color::srgb(0.6, 0.6, 0.6);
+pub const NORMAL_BUTTON: Color = Color::rgb(0.8, 0.8, 0.8);
+pub const HOVERED_BUTTON: Color = Color::rgb(0.9, 0.9, 0.9);
+pub const PRESSED_BUTTON: Color = Color::rgb(0.6, 0.6, 0.6);
 
 #[derive(Component)]
 pub struct TextBox;
@@ -107,7 +107,7 @@ pub fn spawn_button(
                 TextStyle {
                     font: font.0.clone(),
                     font_size: 40.0,
-                    color: Color::srgb(0.7, 0.7, 0.7),
+                    color: Color::rgb(0.7, 0.7, 0.7),
                 },
             ));
         })

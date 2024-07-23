@@ -11,7 +11,7 @@ pub fn setup(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
 ) {
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(16), 49, 22, None, None);
+    let layout = TextureAtlasLayout::from_grid(Vec2::splat(16.0), 49, 22, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
     let texture = asset_server.load(ATLAS_PATH);
@@ -30,7 +30,7 @@ pub fn spawn_tile_renderer(
 ) {
     for (entity, position) in tile_query.iter() {
         let sprite = Sprite {
-            color: Color::srgba(1., 1., 1., 0.5),
+            color: Color::rgba(1., 1., 1., 0.5),
             custom_size: Some(Vec2::splat(TILE_SIZE)),
             ..default()
         };

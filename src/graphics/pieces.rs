@@ -53,7 +53,7 @@ pub fn spawn_piece_renderer(
             commands.entity(entity).with_children(|parent| {
                 parent.spawn(SpriteBundle {
                     sprite: Sprite {
-                        color: Color::srgb(0.2, 0.2, 0.2),
+                        color: Color::rgb(0.2, 0.2, 0.2),
                         custom_size: Some(Vec2::splat(TILE_SIZE)),
                         ..default()
                     },
