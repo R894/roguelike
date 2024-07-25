@@ -1,0 +1,30 @@
+button .button-foreground {
+    padding: 0px;
+    color: transparent;
+    background-color: transparent;
+}
+
+#equipment {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+#items {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#inventory-menu {
+    font: bold; 
+    padding: 14px; 
+    width: 100%; 
+    height: 100%;
+    flex-direction: column;
+}
+
+button div {
+    background-color: #F5CDA7;
+    width: 100%;
+    height: 100%;
+    padding: 5px;
+}
