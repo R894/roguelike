@@ -8,13 +8,6 @@ use crate::{
 };
 
 const INVENTORY_BACKGROUND_COLOR: Color = Color::rgb(0.15, 0.15, 0.15);
-const INVENTORY_BORDER_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
-
-#[derive(Component)]
-// Holds the index of the item in the inventory
-pub struct InventoryItemRef {
-    pub index: usize,
-}
 
 #[derive(Clone, Debug, Default, Hash, Eq, States, PartialEq)]
 enum InventoryState {
@@ -50,12 +43,14 @@ impl Plugin for InventoryPlugin {
 fn spawn_inventory_menu(mut commands: Commands) {
     commands.add(eml! {
         <body id="inventory" s:padding="5%" s:width="100%" s:height="100%">
-            <div s:font="bold" s:padding="14px" s:background-color=INVENTORY_BACKGROUND_COLOR s:width="100%" s:height="100%" s:flex-direction="column">
-                "Inventory"
-                <div id="items" s:flex-direction="column" s:align-items="flex-start">
+            <div id="inventory-menu" s:background-color=INVENTORY_BACKGROUND_COLOR>
+                <div s:flex-direction="column" s:height="100%">
+                    "Inventory"
+                    <div id="items"/>
                 </div>
-                "Equipment"
-                <div id="equipment" s:flex-direction="column" s:align-items="flex-start">
+                <div s:flex-direction="column" s:height="100%">
+                    "Equipment"
+                    <div id="equipment"/>
                 </div>
             </div>
         </body>
@@ -90,7 +85,7 @@ fn init_inventory_items(
             let item_id = item.id();
             if let Some(slot) = item.as_equippable().map(|eq| eq.slot()) {
                 inv.add_child(eml! {
-                    <button on:press=move |ctx| {ctx.send_event(PlayerEquipItemEvent { slot: slot.clone(), id: item_id })} s:padding="0px" s:background-color="transparent"><div s:background-color="indianred" s:padding="5px" s:width="100%" s:height="100%">{name}</div></button>
+                    <button on:press=move |ctx| {ctx.send_event(PlayerEquipItemEvent { slot: slot.clone(), id: item_id })}><div>{name}</div></button>
                 });
             }
         }
@@ -109,7 +104,7 @@ fn update_inventory_items(
             let item_id = item.id();
             if let Some(slot) = item.as_equippable().map(|eq| eq.slot()) {
                 inv.add_child(eml! {
-                    <button on:press=move |ctx| {ctx.send_event(PlayerEquipItemEvent { slot: slot.clone(), id: item_id })} s:padding="0px" s:background-color="transparent"><div s:background-color="indianred" s:padding="5px" s:width="100%" s:height="100%">{name}</div></button>
+                    <button on:press=move |ctx| {ctx.send_event(PlayerEquipItemEvent { slot: slot.clone(), id: item_id })}><div>{name}</div></button>
                 });
             }
         }
@@ -136,11 +131,11 @@ fn init_inventory_equipment(
         }
 
         equipment.add_child(eml! {
-                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Weapon, entity: player_entity })} s:padding="0px" s:background-color="transparent"><div s:background-color="indianred" s:padding="5px" s:width="100%" s:height="100%">{weapon_name}</div></button>
+                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Weapon, entity: player_entity })}><div>{weapon_name}</div></button>
             });
 
         equipment.add_child(eml! {
-                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Chest, entity: player_entity })} s:padding="0px" s:background-color="transparent"><div s:background-color="indianred" s:padding="5px" s:width="100%" s:height="100%">{chest_name}</div></button>
+                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Chest, entity: player_entity })}><div>{chest_name}</div></button>
             });
     }
 }
@@ -165,11 +160,11 @@ fn populate_inventory_equipment(
         }
 
         equipment.add_child(eml! {
-                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Weapon, entity: player_entity })} s:padding="0px" s:background-color="transparent"><div s:background-color="indianred" s:padding="5px" s:width="100%" s:height="100%">{weapon_name}</div></button>
+                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Weapon, entity: player_entity })}><div>{weapon_name}</div></button>
             });
 
         equipment.add_child(eml! {
-                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Chest, entity: player_entity })} s:padding="0px" s:background-color="transparent"><div s:background-color="indianred" s:padding="5px" s:width="100%" s:height="100%">{chest_name}</div></button>
+                <button on:press=move |ctx| {ctx.send_event(UnequipItemEvent { slot: EquipmentSlot::Chest, entity: player_entity })}><div>{chest_name}</div></button>
             });
     }
 }
