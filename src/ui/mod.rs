@@ -1,5 +1,6 @@
 mod systems;
 
+use belly::prelude::*;
 use bevy::prelude::*;
 
 use crate::states::MainState;
@@ -66,6 +67,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         asset_server.load("textures/fantasy_ui_borders/panel-border-010.png");
     commands.insert_resource(UiFont(font));
     commands.insert_resource(BorderTexture(border_texture));
+    commands.add(StyleSheet::load("stylesheet.ess"));
 }
 
 pub fn spawn_button(
