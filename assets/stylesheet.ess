@@ -4,6 +4,50 @@ button .button-foreground {
     background-color: transparent;
 }
 
+button .button-shadow {
+    background-color: transparent;
+}
+
+.item {
+    color: #dcd9dc;
+}
+
+button .button-background {
+    background-color: transparent;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+button:hover > span > .button-foreground {
+    background-color: transparent;
+}
+
+button:hover div {
+    color: #f05941;
+}
+
+#menu button:hover > span > .button-foreground {
+    background-color: #f05941;
+}
+
+#menu button:hover div {
+    color: #dcd9dc;
+}
+
+#menu .button-background {
+    background-color: #dcd9dc;
+}
+
+#menu div {
+    color: #dcd9dc;
+}
+
+#menu button div {
+    color: #363a3f;
+}
+
 #equipment {
     flex-direction: row;
     align-items: flex-start;
@@ -15,6 +59,7 @@ button .button-foreground {
 }
 
 #inventory-menu {
+    background-color: #1e1b16;
     font: bold; 
     padding: 14px; 
     width: 100%; 
@@ -22,9 +67,10 @@ button .button-foreground {
     flex-direction: column;
 }
 
-button div {
-    background-color: #F5CDA7;
-    width: 100%;
-    height: 100%;
-    padding: 5px;
+#menu {
+    background-color: #1e1b16;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    row-gap: 5%;
 }
