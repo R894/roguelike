@@ -1,10 +1,12 @@
+use std::collections::HashSet;
+
 use bevy::prelude::*;
 
-use crate::board::components::Wall;
+use crate::board::components::{VisionBlocker, Wall};
 use crate::board::{components::Position, CurrentBoard};
 use crate::pieces::components::{Health, ItemContainer, ItemPicker, Occupier, Portal};
 use crate::player::Player;
-use crate::vectors::Vector2Int;
+use crate::vectors::{cast_line, Vector2Int};
 
 use super::{Action, GameOverEvent, NextLevelEvent};
 
@@ -132,6 +134,58 @@ impl Action for DigAction {
             return Err(());
         }
 
+        Ok(Vec::new())
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub struct ProjectileShootAction(pub Entity, pub Vector2Int);
+impl Action for ProjectileShootAction {
+    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        let blockers: HashSet<Vector2Int> = world
+            .query_filtered::<&Position, With<VisionBlocker>>()
+            .iter(world)
+            .map(|p| p.v)
+            .collect();
+        let current_position = world.get_mut::<Position>(self.0).ok_or(())?;
+
+        let path = cast_line(current_position.v, self.1, &blockers);
+        if path.is_empty() {
+            println!("No path found");
+            return Err(());
+        }
+        println!("Shooting along path: {:?}", path);
+        Ok(vec![Box::new(ProjectileFlyAction(self.0, path))])
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub struct ProjectileFlyAction(pub Entity, pub Vec<Vector2Int>);
+impl Action for ProjectileFlyAction {
+    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        let mut current_position = world.get_mut::<Position>(self.0).ok_or(())?;
+        println!("Current position: {:?}", current_position.v);
+
+        if self.1.is_empty() {
+            println!("Reached destination");
+            world.despawn(self.0);
+            return Ok(Vec::new());
+        }
+
+        if let Some(pos) = self.1.get(0) {
+            println!("Moving to {:?}", pos);
+            current_position.v = *pos;
+            return Ok(vec![Box::new(ProjectileFlyAction(
+                self.0,
+                self.1[1..].to_vec(),
+            ))]);
+        }
+
+        println!("Moved to {:?}", current_position.v);
         Ok(Vec::new())
     }
     fn as_any(&self) -> &dyn std::any::Any {

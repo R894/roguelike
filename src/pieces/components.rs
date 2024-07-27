@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::actions::{models::despawn_recursive, Action};
+use crate::{
+    actions::{models::despawn_recursive, Action},
+    vectors::Vector2Int,
+};
 
 use super::equipment::{Equippable, Item};
 
@@ -38,6 +41,11 @@ pub struct Gold {
 #[derive(Component, Clone)]
 pub struct GoldDrop {
     pub value: u32,
+}
+
+#[derive(Component)]
+pub struct Projectile {
+    pub destination: Vector2Int,
 }
 
 impl Item for GoldDrop {

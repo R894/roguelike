@@ -8,6 +8,7 @@ use crate::board::components::Position;
 use crate::graphics::assets::Ascii;
 use crate::graphics::TILE_SIZE;
 use crate::pieces::components::{Actor, Melee};
+use crate::pieces::spawn_projectile;
 use crate::player::Player;
 use crate::states::GameState;
 use crate::vectors::Vector2Int;
@@ -58,6 +59,7 @@ pub struct PlayerInputReadyEvent;
 pub struct Arrows;
 
 fn player_position(
+    mut commands: Commands,
     keys: ResMut<ButtonInput<KeyCode>>,
     mut player_query: Query<(Entity, &Position, &Melee, &mut Actor), With<Player>>,
     mut queue: ResMut<ActorQueue>,
@@ -77,6 +79,11 @@ fn player_position(
     if keys.just_pressed(KeyCode::KeyF) {
         next_state.set(ActionDirectionSelectionState::Pending);
         return;
+    }
+
+    if keys.just_pressed(KeyCode::KeyR) {
+        let destination = Vector2Int::new(position.v.x + 10, position.v.y);
+        spawn_projectile(&mut commands, position.v, destination);
     }
 
     if state.get() == &ActionDirectionSelectionState::Pending {
@@ -121,17 +128,17 @@ fn player_position(
     }
 }
 
-pub fn display_action_arrows(
-    mut comands: Commands,
+fn display_action_arrows(
+    mut commands: Commands,
     player_query: Query<Entity, With<Player>>,
     assets: Res<Ascii>,
 ) {
     if let Ok(entity) = player_query.get_single() {
-        spawn_arrows(&mut comands, entity, assets);
+        spawn_arrows(&mut commands, entity, assets);
     }
 }
 
-pub fn spawn_arrows(commands: &mut Commands, entity: Entity, assets: Res<Ascii>) {
+fn spawn_arrows(commands: &mut Commands, entity: Entity, assets: Res<Ascii>) {
     let base_sprite = Sprite {
         color: Color::rgba(1., 1., 1., 0.5),
         custom_size: Some(Vec2::splat(TILE_SIZE)),
@@ -198,7 +205,7 @@ fn spawn_arrow(
         .id()
 }
 
-pub fn clear_action_arrows(mut commands: Commands, arrow_query: Query<Entity, With<Arrows>>) {
+fn clear_action_arrows(mut commands: Commands, arrow_query: Query<Entity, With<Arrows>>) {
     for entity in arrow_query.iter() {
         commands.entity(entity).despawn_recursive();
     }

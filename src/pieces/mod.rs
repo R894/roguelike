@@ -10,6 +10,7 @@ use crate::{
     board::{components::Position, systems::spawn_map, ValidSpots},
     player::{despawn_player, Player},
     states::MainState,
+    vectors::Vector2Int,
 };
 pub mod components;
 pub mod equipment;
@@ -112,6 +113,23 @@ fn spawn_portal(commands: &mut Commands, valid_spots: &Res<ValidSpots>) {
             v: valid_spots.0[rand],
         },
     ));
+}
+
+pub fn spawn_projectile(
+    commands: &mut Commands,
+    source: Vector2Int,
+    destination: Vector2Int,
+) -> Entity {
+    commands
+        .spawn((
+            components::Actor::default(),
+            components::Projectile { destination },
+            components::Piece {
+                kind: "Coin".to_string(),
+            },
+            Position { v: source },
+        ))
+        .id()
 }
 
 pub fn despawn_pieces(

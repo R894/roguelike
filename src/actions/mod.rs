@@ -41,7 +41,12 @@ impl Plugin for ActionsPlugin {
             )
             .add_systems(
                 Update,
-                (systems::plan_walk, systems::plan_melee).in_set(ActionSet::Planning),
+                (
+                    systems::plan_walk,
+                    systems::plan_melee,
+                    systems::process_projectiles,
+                )
+                    .in_set(ActionSet::Planning),
             );
     }
 }

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     actions::{
-        models::{MeleeHitAction, WalkAction},
+        models::{MeleeHitAction, ProjectileFlyAction, WalkAction},
         ActionExecutedEvent,
     },
     board::components::Position,
@@ -110,6 +110,17 @@ pub fn walk_animation(mut commands: Commands, mut ev_action: EventReader<ActionE
                 instant: true,
                 ..default()
             });
+        }
+
+        if let Some(action) = action.downcast_ref::<ProjectileFlyAction>() {
+            if let Some(v) = action.1.first() {
+                let target = super::get_world_vec(*v, PIECE_Z);
+                commands.entity(action.0).insert(PathAnimator {
+                    path: VecDeque::from([target]),
+                    instant: true,
+                    ..default()
+                });
+            }
         }
     }
 }

@@ -1,14 +1,15 @@
 use bevy::prelude::*;
 use rand::prelude::*;
 
+use crate::actions::models::ProjectileShootAction;
 use crate::board::systems::VISIBILITY_RANGE;
 use crate::board::CurrentBoard;
-use crate::pieces::components::{Melee, Occupier, Walk};
+use crate::pieces::components::{Melee, Occupier, Projectile, Walk};
 use crate::player::Player;
 use crate::vectors::{find_path, ORTHO_DIRECTIONS};
 use crate::{board::components::Position, pieces::components::Actor};
 
-use super::models::{MeleeHitAction, WalkAction};
+use super::models::{MeleeHitAction, ProjectileFlyAction, WalkAction};
 use super::{
     ActionExecutedEvent, ActionsCompleteEvent, ActorQueue, InvalidPlayerActionEvent,
     NextActorEvent, PendingActions,
@@ -157,4 +158,14 @@ pub fn plan_melee(
         action,
         PLAYER_ATTACK_SCORE + melee.current_damage.min as i32,
     ))
+}
+
+pub fn process_projectiles(mut query: Query<(&mut Actor, Entity, &Projectile), Added<Projectile>>) {
+    for (mut actor, entity, projectile) in query.iter_mut() {
+        println!("Processing projectile {:?}", projectile.destination);
+        actor.0.push((
+            Box::new(ProjectileShootAction(entity, projectile.destination)),
+            0,
+        ));
+    }
 }
