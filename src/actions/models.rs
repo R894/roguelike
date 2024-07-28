@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::board::components::{VisionBlocker, Wall};
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Health, ItemContainer, ItemPicker, Occupier, Portal};
+use crate::pieces::components::{Health, ItemContainer, ItemPicker, Occupier, Piece, Portal};
 use crate::player::Player;
 use crate::vectors::{cast_line, Vector2Int};
 
@@ -167,22 +167,38 @@ impl Action for ProjectileShootAction {
 pub struct ProjectileFlyAction(pub Entity, pub Vec<Vector2Int>);
 impl Action for ProjectileFlyAction {
     fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        if let Some(pos) = self.1.get(1) {
+            let collided_entities = world
+                .query_filtered::<(Entity, &Position), With<Health>>()
+                .iter(world)
+                .find_map(|(entity, position)| {
+                    if position.v == *pos {
+                        Some(entity)
+                    } else {
+                        None
+                    }
+                });
+
+            if let Some(collided_entity) = collided_entities {
+                world.despawn(self.0);
+                // stand-in ridiculous DamageAction so I don't forget to refactor this
+                return Ok(vec![Box::new(DamageAction(collided_entity, 500))]);
+            }
+        }
+
         let mut current_position = world.get_mut::<Position>(self.0).ok_or(())?;
         println!("Current position: {:?}", current_position.v);
 
-        if self.1.is_empty() {
+        if self.1.is_empty() || self.1.len() == 1 {
             println!("Reached destination");
             world.despawn(self.0);
             return Ok(Vec::new());
         }
 
-        if let Some(pos) = self.1.get(0) {
+        if let Some(pos) = self.1.get(1) {
             println!("Moving to {:?}", pos);
             current_position.v = *pos;
-            return Ok(vec![Box::new(ProjectileFlyAction(
-                self.0,
-                self.1[1..].to_vec(),
-            ))]);
+            return Ok(Vec::new());
         }
 
         println!("Moved to {:?}", current_position.v);

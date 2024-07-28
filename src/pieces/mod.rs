@@ -123,7 +123,10 @@ pub fn spawn_projectile(
     commands
         .spawn((
             components::Actor::default(),
-            components::Projectile { destination },
+            components::Projectile {
+                destination,
+                damage: Damage { min: 1, max: 1 },
+            },
             components::Piece {
                 kind: "Coin".to_string(),
             },

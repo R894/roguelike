@@ -46,6 +46,7 @@ pub struct GoldDrop {
 #[derive(Component)]
 pub struct Projectile {
     pub destination: Vector2Int,
+    pub damage: Damage,
 }
 
 impl Item for GoldDrop {
