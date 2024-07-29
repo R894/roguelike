@@ -52,7 +52,7 @@ impl Plugin for ActionsPlugin {
 }
 
 pub trait Action: Send + Sync {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()>;
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()>;
     fn as_any(&self) -> &dyn Any;
 }
 

@@ -1,10 +1,10 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 use bevy::prelude::*;
 
-use crate::board::components::{VisionBlocker, Wall};
+use crate::board::components::Wall;
 use crate::board::{components::Position, CurrentBoard};
-use crate::pieces::components::{Health, ItemContainer, ItemPicker, Occupier, Piece, Portal};
+use crate::pieces::components::{Health, ItemContainer, ItemPicker, Occupier, Portal};
 use crate::player::Player;
 use crate::vectors::{cast_line, Vector2Int};
 
@@ -12,7 +12,7 @@ use super::{Action, GameOverEvent, NextLevelEvent};
 
 pub struct DamageAction(pub Entity, pub u32);
 impl Action for DamageAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         let Some(mut health) = world.get_mut::<Health>(self.0) else {
             return Err(());
         };
@@ -60,7 +60,7 @@ pub struct MeleeHitAction {
     pub damage: u32,
 }
 impl Action for MeleeHitAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         let attacker_position = world.get::<Position>(self.attacker).ok_or(())?;
         if attacker_position.v.manhattan(self.target) > 1 {
             return Err(());
@@ -86,7 +86,7 @@ impl Action for MeleeHitAction {
 
 pub struct WalkAction(pub Entity, pub Vector2Int);
 impl Action for WalkAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         let board = world.get_resource::<CurrentBoard>().ok_or(())?;
         if !board.tiles.contains_key(&self.1) {
             return Err(());
@@ -116,7 +116,7 @@ impl Action for WalkAction {
 
 pub struct DigAction(pub Entity, pub Vector2Int);
 impl Action for DigAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         let wall_entity = world
             .query_filtered::<(Entity, &Position, &Occupier), With<Wall>>()
             .iter(world)
@@ -141,64 +141,83 @@ impl Action for DigAction {
     }
 }
 
-pub struct ProjectileShootAction(pub Entity, pub Vector2Int);
+pub struct ProjectileShootAction {
+    pub entity: Entity,
+    pub target: Vector2Int,
+    pub damage: u32,
+}
 impl Action for ProjectileShootAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         let blockers: HashSet<Vector2Int> = world
-            .query_filtered::<&Position, With<VisionBlocker>>()
+            .query_filtered::<&Position, With<Occupier>>()
             .iter(world)
             .map(|p| p.v)
             .collect();
-        let current_position = world.get_mut::<Position>(self.0).ok_or(())?;
+        let current_position = world.get_mut::<Position>(self.entity).ok_or(())?;
 
-        let path = cast_line(current_position.v, self.1, &blockers);
+        let mut path = VecDeque::from(cast_line(current_position.v, self.target, &blockers));
+
         if path.is_empty() {
             println!("No path found");
             return Err(());
         }
+
+        // remove the first position, which is the starting position
+        path.pop_front();
+
         println!("Shooting along path: {:?}", path);
-        Ok(vec![Box::new(ProjectileFlyAction(self.0, path))])
+        Ok(vec![Box::new(ProjectileFlyAction {
+            entity: self.entity,
+            path,
+            damage: self.damage,
+        })])
     }
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
 }
 
-pub struct ProjectileFlyAction(pub Entity, pub Vec<Vector2Int>);
+pub struct ProjectileFlyAction {
+    pub entity: Entity,
+    pub path: VecDeque<Vector2Int>,
+    pub damage: u32,
+}
 impl Action for ProjectileFlyAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
-        if let Some(pos) = self.1.get(1) {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+        if let Some(next_pos) = self.path.get(1) {
             let collided_entities = world
                 .query_filtered::<(Entity, &Position), With<Health>>()
                 .iter(world)
                 .find_map(|(entity, position)| {
-                    if position.v == *pos {
+                    if position.v == *next_pos {
                         Some(entity)
                     } else {
                         None
                     }
                 });
-
             if let Some(collided_entity) = collided_entities {
-                world.despawn(self.0);
-                // stand-in ridiculous DamageAction so I don't forget to refactor this
-                return Ok(vec![Box::new(DamageAction(collided_entity, 500))]);
+                world.despawn(self.entity);
+                return Ok(vec![Box::new(DamageAction(collided_entity, self.damage))]);
             }
         }
 
-        let mut current_position = world.get_mut::<Position>(self.0).ok_or(())?;
+        let mut current_position = world.get_mut::<Position>(self.entity).ok_or(())?;
         println!("Current position: {:?}", current_position.v);
 
-        if self.1.is_empty() || self.1.len() == 1 {
+        if self.path.is_empty() {
             println!("Reached destination");
-            world.despawn(self.0);
+            world.despawn(self.entity);
             return Ok(Vec::new());
         }
 
-        if let Some(pos) = self.1.get(1) {
+        if let Some(pos) = self.path.pop_front() {
             println!("Moving to {:?}", pos);
-            current_position.v = *pos;
-            return Ok(Vec::new());
+            current_position.v = pos;
+            return Ok(vec![Box::new(ProjectileFlyAction {
+                entity: self.entity,
+                path: self.path.clone(),
+                damage: self.damage,
+            })]);
         }
 
         println!("Moved to {:?}", current_position.v);
@@ -211,7 +230,7 @@ impl Action for ProjectileFlyAction {
 
 pub struct PickupAction(pub Entity, pub Vector2Int);
 impl Action for PickupAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         // ensure that the entity is an item picker before any expensive work is done
         world.get::<ItemPicker>(self.0).ok_or(())?;
 
@@ -237,7 +256,7 @@ impl Action for PickupAction {
 
 pub struct NextLevelAction(pub Entity, pub Vector2Int);
 impl Action for NextLevelAction {
-    fn execute(&self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
+    fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
         // ensure that the entity is a player before any expensive work is done
         if world.get::<Player>(self.0).is_none() {
             return Err(());

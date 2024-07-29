@@ -113,9 +113,9 @@ pub fn walk_animation(mut commands: Commands, mut ev_action: EventReader<ActionE
         }
 
         if let Some(action) = action.downcast_ref::<ProjectileFlyAction>() {
-            if let Some(v) = action.1.first() {
+            if let Some(v) = action.path.front() {
                 let target = super::get_world_vec(*v, PIECE_Z);
-                if let Some(mut entity) = commands.get_entity(action.0) {
+                if let Some(mut entity) = commands.get_entity(action.entity) {
                     entity.insert(PathAnimator {
                         path: VecDeque::from([target]),
                         instant: true,

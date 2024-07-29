@@ -18,7 +18,7 @@ use super::{
 const PLAYER_ATTACK_SCORE: i32 = 100;
 const MOVE_SCORE: i32 = 50;
 
-fn execute_action(action: Box<dyn super::Action>, world: &mut World) -> bool {
+fn execute_action(mut action: Box<dyn super::Action>, world: &mut World) -> bool {
     if let Ok(result) = action.execute(world) {
         if let Some(mut pending) = world.get_resource_mut::<PendingActions>() {
             pending.0.extend(result);
@@ -160,13 +160,15 @@ pub fn plan_melee(
     ))
 }
 
-pub fn process_projectiles(
-    mut query: Query<(&mut Actor, Entity, &Projectile), Or<(Added<Projectile>, Changed<Position>)>>,
-) {
+pub fn process_projectiles(mut query: Query<(&mut Actor, Entity, &Projectile), Added<Projectile>>) {
     for (mut actor, entity, projectile) in query.iter_mut() {
         println!("Processing projectile {:?}", projectile.destination);
         actor.0.push((
-            Box::new(ProjectileShootAction(entity, projectile.destination)),
+            Box::new(ProjectileShootAction {
+                entity,
+                target: projectile.destination,
+                damage: projectile.damage.max,
+            }),
             0,
         ));
     }
