@@ -155,15 +155,12 @@ impl Action for ProjectileShootAction {
             .collect();
         let current_position = world.get_mut::<Position>(self.entity).ok_or(())?;
 
-        let mut path = VecDeque::from(cast_line(current_position.v, self.target, &blockers));
+        let path = VecDeque::from(cast_line(current_position.v, self.target, &blockers));
 
         if path.is_empty() {
             println!("No path found");
             return Err(());
         }
-
-        // remove the first position, which is the starting position
-        path.pop_front();
 
         println!("Shooting along path: {:?}", path);
         Ok(vec![Box::new(ProjectileFlyAction {
@@ -184,25 +181,28 @@ pub struct ProjectileFlyAction {
 }
 impl Action for ProjectileFlyAction {
     fn execute(&mut self, world: &mut World) -> Result<Vec<Box<dyn Action>>, ()> {
-        if let Some(next_pos) = self.path.get(1) {
+        if let Some(pos) = self.path.front() {
             let collided_entities = world
                 .query_filtered::<(Entity, &Position), With<Health>>()
                 .iter(world)
                 .find_map(|(entity, position)| {
-                    if position.v == *next_pos {
+                    if position.v == *pos {
                         Some(entity)
                     } else {
                         None
                     }
                 });
             if let Some(collided_entity) = collided_entities {
+                println!(
+                    "Collided with: {:?} for {} damage",
+                    collided_entity, self.damage
+                );
                 world.despawn(self.entity);
                 return Ok(vec![Box::new(DamageAction(collided_entity, self.damage))]);
             }
         }
 
         let mut current_position = world.get_mut::<Position>(self.entity).ok_or(())?;
-        println!("Current position: {:?}", current_position.v);
 
         if self.path.is_empty() {
             println!("Reached destination");
@@ -211,7 +211,6 @@ impl Action for ProjectileFlyAction {
         }
 
         if let Some(pos) = self.path.pop_front() {
-            println!("Moving to {:?}", pos);
             current_position.v = pos;
             return Ok(vec![Box::new(ProjectileFlyAction {
                 entity: self.entity,
@@ -220,7 +219,6 @@ impl Action for ProjectileFlyAction {
             })]);
         }
 
-        println!("Moved to {:?}", current_position.v);
         Ok(Vec::new())
     }
     fn as_any(&self) -> &dyn std::any::Any {
