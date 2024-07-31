@@ -138,6 +138,7 @@ fn init_inventory_equipment(
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn populate_inventory_equipment(
     player_equipment_query: Query<(Entity, &Equipment), (With<Player>, Changed<Equipment>)>,
     mut elements: Elements,
