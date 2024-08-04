@@ -125,7 +125,7 @@ pub fn spawn_projectile(
             components::Actor::default(),
             components::Projectile {
                 destination,
-                damage: Damage { min: 1, max: 1 },
+                damage: Damage { min: 5, max: 5 },
             },
             components::Piece {
                 kind: "Coin".to_string(),

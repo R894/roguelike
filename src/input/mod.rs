@@ -82,8 +82,12 @@ fn player_position(
     }
 
     if keys.just_pressed(KeyCode::KeyR) {
+        let source = Vector2Int::new(position.v.x + 1, position.v.y);
         let destination = Vector2Int::new(position.v.x + 10, position.v.y);
-        spawn_projectile(&mut commands, position.v, destination);
+
+        spawn_projectile(&mut commands, source, destination);
+        ev_input.send(PlayerInputReadyEvent);
+        return;
     }
 
     if state.get() == &ActionDirectionSelectionState::Pending {
